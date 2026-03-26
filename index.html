@@ -1165,7 +1165,251 @@ function renderKitchenKanban(data){renderKanban('kitchen-kanban-board',data,fals
 
 function renderLiveBoard(data){
   const board=document.getElementById('hq-live-board');if(!board)return;
-  renderKanban('hq-live-board',data,hqDragEnabled);
+  const now=new Date();
+  const inTransit=data.filter(o=>o.status==='in_transit');
+  const ready=data.filter(o=>o.status==='ready');
+  const delivered=data.filter(o=>o.status==='delivered'&&o.delivered_at);
+  const notReady=data.filter(o=>o.status==='not_ready');
+
+  // Avg delivery time from historical data
+  const deliveryTimes=delivered.filter(o=>o.picked_up_at&&o.delivered_at).map(o=>
+    Math.round((new Date(o.delivered_at)-new Date(o.picked_up_at))/(1000*60))
+  );
+  const avgMins=deliveryTimes.length>0?Math.round(deliveryTimes.reduce((a,b)=>a+b,0)/deliveryTimes.length):45;
+
+  // Today's orders
+  const todayStart=new Date();todayStart.setHours(0,0,0,0);
+  const todayOrders=data.filter(o=>new Date(o.ordered_at)>=todayStart);
+  const todayDelivered=todayOrders.filter(o=>o.status==='delivered').length;
+  const onTime=delivered.filter(o=>{
+    if(!o.picked_up_at||!o.delivered_at)return false;
+    const mins=Math.round((new Date(o.delivered_at)-new Date(o.picked_up_at))/(1000*60));
+    return mins<=avgMins*1.2;
+  });
+  const onTimePct=delivered.length>0?Math.round((onTime.length/delivered.length)*100):100;
+
+  // Expiry alerts
+  const expiryAlerts=[];
+  data.forEach(o=>{
+    if(!o.picked_up_at)return;
+    const shelfLife=o.order_items?.[0]?.menu_items?.shelf_life_days||4;
+    const bb=new Date(o.picked_up_at);bb.setDate(bb.getDate()+shelfLife);
+    const daysLeft=Math.ceil((bb-now)/(1000*60*60*24));
+    if(daysLeft<=2&&daysLeft>=0&&o.status!=='delivered'){
+      expiryAlerts.push({outlet:o.outlets?.name||'Unknown',daysLeft,items:(o.order_items||[]).map(i=>`${i.menu_items?.name}`).join(', ')});
+    }
+  });
+
+  // Active drivers
+  const activeDrivers=[...new Set(inTransit.map(o=>o.scans?.find?.(s=>s.scan_type==='dispatch')?.scanned_by).filter(Boolean))];
+
+  // Late orders flag
+  const lateOrders=data.filter(o=>o.notes?.includes('[LATE ORDER]')&&new Date(o.ordered_at)>=todayStart);
+
+  // Waiting too long alerts
+  const waitAlerts=ready.filter(o=>{
+    if(!o.ready_at)return false;
+    const waitMins=Math.round((now-new Date(o.ready_at))/(1000*60));
+    return waitMins>30;
+  });
+
+  board.innerHTML=`
+    <div style="background:#111009;border-radius:8px;padding:16px;">
+
+      <!-- Header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.06)">
+        <div>
+          <div style="color:#F5F0E8;font-size:13px;font-weight:700;letter-spacing:0.5px;">LIVE OPERATIONS BOARD</div>
+          <div style="color:#555;font-size:10px;letter-spacing:1px;margin-top:2px;">AUTO-REFRESHING · REAL TIME</div>
+        </div>
+        <div style="text-align:right">
+          <div style="color:#F5F0E8;font-size:16px;font-weight:700;" id="live-clock"></div>
+          <div style="display:flex;align-items:center;gap:5px;justify-content:flex-end;margin-top:3px">
+            <div style="width:6px;height:6px;border-radius:50%;background:#639922;animation:pulse 1.5s infinite"></div>
+            <div style="color:#639922;font-size:9px;letter-spacing:1px">LIVE</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stat strip -->
+      <div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-bottom:16px">
+        <div style="background:#1a1814;border-radius:6px;padding:10px;text-align:center;border-top:2px solid var(--nr-bar)">
+          <div style="font-size:24px;font-weight:700;color:var(--nr-bg)">${notReady.length}</div>
+          <div style="font-size:9px;color:#555;letter-spacing:0.5px;margin-top:2px">NOT READY</div>
+        </div>
+        <div style="background:#1a1814;border-radius:6px;padding:10px;text-align:center;border-top:2px solid var(--rd-bar)">
+          <div style="font-size:24px;font-weight:700;color:var(--mustard)">${ready.length}</div>
+          <div style="font-size:9px;color:#555;letter-spacing:0.5px;margin-top:2px">READY</div>
+        </div>
+        <div style="background:#1a1814;border-radius:6px;padding:10px;text-align:center;border-top:2px solid var(--tr-bar)">
+          <div style="font-size:24px;font-weight:700;color:var(--tr-bg)">${inTransit.length}</div>
+          <div style="font-size:9px;color:#555;letter-spacing:0.5px;margin-top:2px">IN TRANSIT</div>
+        </div>
+        <div style="background:#1a1814;border-radius:6px;padding:10px;text-align:center;border-top:2px solid var(--dl-bar)">
+          <div style="font-size:24px;font-weight:700;color:var(--dl-bg)">${todayDelivered}</div>
+          <div style="font-size:9px;color:#555;letter-spacing:0.5px;margin-top:2px">DELIVERED TODAY</div>
+        </div>
+        <div style="background:#1a1814;border-radius:6px;padding:10px;text-align:center;border-top:2px solid var(--mustard)">
+          <div style="font-size:24px;font-weight:700;color:var(--mustard)">${avgMins}<span style="font-size:11px;color:#555">m</span></div>
+          <div style="font-size:9px;color:#555;letter-spacing:0.5px;margin-top:2px">AVG DELIVERY</div>
+        </div>
+        <div style="background:#1a1814;border-radius:6px;padding:10px;text-align:center;border-top:2px solid ${onTimePct>=80?'var(--dl-bar)':'var(--nr-bar)'}">
+          <div style="font-size:24px;font-weight:700;color:${onTimePct>=80?'var(--dl-bg)':'var(--nr-bg)'}">${onTimePct}<span style="font-size:11px;color:#555">%</span></div>
+          <div style="font-size:9px;color:#555;letter-spacing:0.5px;margin-top:2px">ON TIME</div>
+        </div>
+      </div>
+
+      <!-- Main grid -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 280px;gap:12px">
+
+        <!-- In Transit -->
+        <div style="background:#0d1520;border-radius:8px;overflow:hidden;border:1px solid rgba(24,95,165,0.2)">
+          <div style="background:rgba(24,95,165,0.15);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(24,95,165,0.15)">
+            <div style="color:var(--tr-bg);font-size:10px;font-weight:700;letter-spacing:1px">IN TRANSIT</div>
+            <div style="background:#185FA5;color:white;font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px">${inTransit.length} active</div>
+          </div>
+          <div style="padding:10px;display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto">
+            ${inTransit.length===0?'<div style="color:#555;font-size:12px;text-align:center;padding:20px">No active deliveries</div>':
+            inTransit.map(o=>{
+              const elapsedMins=o.picked_up_at?Math.round((now-new Date(o.picked_up_at))/(1000*60)):0;
+              const isLate=elapsedMins>avgMins*1.2;
+              const pct=Math.min(100,Math.round((elapsedMins/avgMins)*100));
+              const allUnits=o.cake_units||[];
+              const loaded=allUnits.filter(u=>u.scanned_by_driver).length;
+              return`<div style="background:rgba(24,95,165,0.08);border-radius:6px;padding:10px 12px;border-left:3px solid ${isLate?'var(--nr-bar)':'var(--tr-bar)'}">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+                  <div>
+                    <div style="color:#F5F0E8;font-size:12px;font-weight:600">${o.outlets?.name||'Unknown'}</div>
+                    <div style="color:#555;font-size:10px;margin-top:1px">${(o.order_items||[]).map(i=>`${i.menu_items?.name} × ${i.quantity}`).join(', ')}</div>
+                  </div>
+                  <div style="text-align:right;flex-shrink:0;margin-left:8px">
+                    <div style="font-size:13px;font-weight:700;color:${isLate?'var(--nr-bg)':'var(--mustard)'}">${elapsedMins}m</div>
+                    ${isLate?'<div style="font-size:9px;color:var(--nr-bar)">⚠ running late</div>':'<div style="font-size:9px;color:#555">en route</div>'}
+                  </div>
+                </div>
+                <div style="height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden">
+                  <div style="width:${pct}%;height:100%;background:${isLate?'var(--nr-bar)':'var(--tr-bar)'};border-radius:2px"></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-top:4px">
+                  <div style="font-size:9px;color:#555">${loaded}/${allUnits.length} items loaded</div>
+                  <div style="font-size:9px;color:#555">avg: ${avgMins}m</div>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+
+        <!-- Ready to pick up -->
+        <div style="background:#0d1208;border-radius:8px;overflow:hidden;border:1px solid rgba(39,80,10,0.2)">
+          <div style="background:rgba(39,80,10,0.15);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(39,80,10,0.15)">
+            <div style="color:var(--dl-bg);font-size:10px;font-weight:700;letter-spacing:1px">READY TO PICK UP</div>
+            <div style="background:#27500A;color:var(--dl-bg);font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px">${ready.length} waiting</div>
+          </div>
+          <div style="padding:10px;display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto">
+            ${ready.length===0?'<div style="color:#555;font-size:12px;text-align:center;padding:20px">No orders ready</div>':
+            ready.sort((a,b)=>new Date(a.ready_at||0)-new Date(b.ready_at||0)).map(o=>{
+              const waitMins=o.ready_at?Math.round((now-new Date(o.ready_at))/(1000*60)):0;
+              const isLongWait=waitMins>30;
+              return`<div style="background:rgba(39,80,10,0.08);border-radius:6px;padding:10px 12px;border-left:3px solid ${isLongWait?'var(--nr-bar)':'var(--dl-bar)'}">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <div>
+                    <div style="color:#F5F0E8;font-size:12px;font-weight:600">${o.outlets?.name||'Unknown'}</div>
+                    <div style="color:#555;font-size:10px;margin-top:1px">${(o.order_items||[]).map(i=>`${i.menu_items?.name} × ${i.quantity}`).join(', ')}</div>
+                  </div>
+                  <div style="text-align:right;flex-shrink:0;margin-left:8px">
+                    <div style="font-size:13px;font-weight:700;color:${isLongWait?'var(--nr-bg)':'var(--dl-bg)'}">${waitMins}m</div>
+                    <div style="font-size:9px;color:#555">waiting</div>
+                  </div>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+
+        <!-- Right column -->
+        <div style="display:flex;flex-direction:column;gap:10px">
+
+          <!-- Alerts -->
+          <div style="background:#1a1814;border-radius:8px;overflow:hidden;border:1px solid rgba(226,75,74,0.15)">
+            <div style="background:rgba(226,75,74,0.08);padding:8px 14px;border-bottom:1px solid rgba(226,75,74,0.1)">
+              <div style="color:var(--nr-bg);font-size:10px;font-weight:700;letter-spacing:1px">ALERTS</div>
+            </div>
+            <div style="padding:8px;display:flex;flex-direction:column;gap:5px">
+              ${inTransit.filter(o=>{
+                const e=o.picked_up_at?Math.round((now-new Date(o.picked_up_at))/(1000*60)):0;
+                return e>avgMins*1.2;
+              }).map(o=>{
+                const e=Math.round((now-new Date(o.picked_up_at))/(1000*60));
+                return`<div style="background:rgba(123,45,45,0.15);border-radius:5px;padding:7px 9px;border-left:2px solid var(--nr-bar)">
+                  <div style="color:var(--nr-bg);font-size:10px;font-weight:600">⚠ ${o.outlets?.name} late</div>
+                  <div style="color:#555;font-size:9px;margin-top:1px">${e}m — avg is ${avgMins}m</div>
+                </div>`;
+              }).join('')}
+              ${waitAlerts.map(o=>{
+                const w=Math.round((now-new Date(o.ready_at))/(1000*60));
+                return`<div style="background:rgba(239,159,39,0.08);border-radius:5px;padding:7px 9px;border-left:2px solid var(--mustard)">
+                  <div style="color:var(--mustard);font-size:10px;font-weight:600">⏱ ${o.outlets?.name} waiting ${w}m</div>
+                  <div style="color:#555;font-size:9px;margin-top:1px">Ready — no driver yet</div>
+                </div>`;
+              }).join('')}
+              ${lateOrders.length>0?`<div style="background:rgba(239,159,39,0.08);border-radius:5px;padding:7px 9px;border-left:2px solid var(--mustard)">
+                <div style="color:var(--mustard);font-size:10px;font-weight:600">📦 ${lateOrders.length} late order${lateOrders.length>1?'s':''} today</div>
+                <div style="color:#555;font-size:9px;margin-top:1px">${lateOrders.map(o=>o.outlets?.name).join(', ')}</div>
+              </div>`:''}
+              ${inTransit.filter(o=>{const e=o.picked_up_at?Math.round((now-new Date(o.picked_up_at))/(1000*60)):0;return e>avgMins*1.2;}).length===0&&waitAlerts.length===0&&lateOrders.length===0?
+                '<div style="color:#555;font-size:11px;text-align:center;padding:10px">No alerts — all good</div>':''}
+            </div>
+          </div>
+
+          <!-- Expiry watch -->
+          <div style="background:#1a1814;border-radius:8px;overflow:hidden;border:1px solid rgba(239,159,39,0.1)">
+            <div style="background:rgba(239,159,39,0.06);padding:8px 14px;border-bottom:1px solid rgba(239,159,39,0.08)">
+              <div style="color:var(--mustard);font-size:10px;font-weight:700;letter-spacing:1px">EXPIRY WATCH</div>
+            </div>
+            <div style="padding:8px;display:flex;flex-direction:column;gap:5px">
+              ${expiryAlerts.length===0?'<div style="color:#555;font-size:11px;text-align:center;padding:10px">No items expiring soon</div>':
+              expiryAlerts.map(a=>`
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;background:rgba(255,255,255,0.02);border-radius:5px">
+                  <div>
+                    <div style="color:#F5F0E8;font-size:10px;font-weight:600">${a.outlet}</div>
+                    <div style="color:#555;font-size:9px">${a.items}</div>
+                  </div>
+                  <div style="background:${a.daysLeft===0?'rgba(123,45,45,0.3)':'rgba(239,159,39,0.15)'};color:${a.daysLeft===0?'var(--nr-bg)':'var(--mustard)'};font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap">
+                    ${a.daysLeft===0?'Today':a.daysLeft===1?'Tomorrow':a.daysLeft+' days'}
+                  </div>
+                </div>`).join('')}
+            </div>
+          </div>
+
+          <!-- Today summary -->
+          <div style="background:#1a1814;border-radius:8px;padding:10px 12px">
+            <div style="color:#555;font-size:9px;letter-spacing:1px;margin-bottom:8px">TODAY'S SUMMARY</div>
+            ${[
+              ['Orders placed',todayOrders.length,'#F5F0E8'],
+              ['Completed',todayDelivered,'var(--dl-bg)'],
+              ['Active drivers',activeDrivers.length||inTransit.length,'var(--tr-bg)'],
+              ['Late orders',lateOrders.length,lateOrders.length>0?'var(--nr-bg)':'#555'],
+            ].map(([label,val,color])=>`
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+                <div style="color:#888;font-size:10px">${label}</div>
+                <div style="font-size:11px;font-weight:700;color:${color}">${val}</div>
+              </div>`).join('')}
+          </div>
+
+        </div>
+      </div>
+    </div>`;
+
+  // Live clock
+  const clockEl=document.getElementById('live-clock');
+  if(clockEl){
+    const updateClock=()=>{
+      const n=new Date();
+      clockEl.textContent=n.toLocaleTimeString('en-MY',{hour:'2-digit',minute:'2-digit'});
+    };
+    updateClock();
+    setInterval(updateClock,1000);
+  }
 }
 
 function handleKanbanDragStart(event,orderId,fromSc){
