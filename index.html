@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>Dojo Interface</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -15,7 +15,7 @@
       --tr-bg:#B5D4F4;--tr-text:#042C53;--tr-bar:#185FA5;
       --dl-bg:#C0DD97;--dl-text:#173404;--dl-bar:#27500A;
     }
-    *{box-sizing:border-box;margin:0;padding:0}
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
     body{font-family:'Segoe UI',sans-serif;color:var(--charcoal);min-height:100vh;transition:background 0.5s}
     body.day{background:var(--canvas)}
     body.night{background:#111009}
@@ -54,22 +54,22 @@
     .role-card:hover::before{left:125%}
     .role-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(44,42,37,0.12)}
     .role-card.driver-card{border-bottom-color:#185FA5!important}
-    .role-card.admin-card{border-bottom-color:#27500A!important}
-    body.night .role-card.admin-card{background:#EF9F27;border-color:#EF9F27}
+    .role-card.hq-card{border-bottom-color:#27500A!important}
+    body.night .role-card.hq-card{background:#EF9F27;border-color:#EF9F27}
     .role-card-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
     body.day .role-card-icon.outlet-icon{background:rgba(239,159,39,0.12)}
     body.day .role-card-icon.kitchen-icon{background:rgba(239,159,39,0.12)}
     body.day .role-card-icon.driver-icon{background:rgba(24,95,165,0.1)}
-    body.day .role-card-icon.admin-icon{background:rgba(39,80,10,0.1)}
+    body.day .role-card-icon.hq-icon{background:rgba(39,80,10,0.1)}
     body.night .role-card-icon{background:rgba(255,255,255,0.08)}
     .role-card-title{font-size:13px;font-weight:700}
     body.day .role-card-title{color:var(--charcoal)}
     body.night .role-card-title{color:#F5F0E8}
-    body.night .role-card.admin-card .role-card-title{color:var(--charcoal)}
+    body.night .role-card.hq-card .role-card-title{color:var(--charcoal)}
     .role-card-sub{font-size:10px;margin-top:3px}
     body.day .role-card-sub{color:#888}
     body.night .role-card-sub{color:#555}
-    body.night .role-card.admin-card .role-card-sub{color:#633806}
+    body.night .role-card.hq-card .role-card-sub{color:#633806}
     .mode-switch{display:flex;background:rgba(255,255,255,0.1);border-radius:20px;padding:3px;gap:2px}
     .mode-btn{padding:4px 10px;border-radius:16px;border:none;cursor:pointer;font-size:10px;font-weight:600;letter-spacing:0.5px;transition:all 0.2s;background:none;color:#888}
     .mode-btn.active{background:var(--mustard);color:var(--charcoal)}
@@ -91,27 +91,65 @@
     .blast-banner-dot{width:8px;height:8px;border-radius:50%;background:var(--mustard);flex-shrink:0;animation:pulse 1.5s infinite}
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
 
-    /* ── HEADER ── */
+    /* ── MAIN APP LAYOUT ── */
+    #main-app{display:none;min-height:100vh}
+    .app-layout{display:flex;min-height:100vh}
+
+    /* ── SIDEBAR (HQ desktop only) ── */
+    .sidebar{width:220px;background:var(--charcoal);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;transition:transform 0.3s}
+    .sidebar-logo{padding:18px 16px;border-bottom:1px solid rgba(255,255,255,0.06);cursor:pointer;display:flex;align-items:center;gap:10px}
+    .sidebar-logo-box{width:32px;height:32px;background:var(--mustard);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:var(--charcoal);border-radius:4px;flex-shrink:0}
+    .sidebar-logo-text{font-size:13px;font-weight:700;color:#F5F0E8}
+    .sidebar-logo-text span{color:var(--mustard)}
+    .sidebar-nav{flex:1;padding:12px 8px;display:flex;flex-direction:column;gap:2px;overflow-y:auto}
+    .sidebar-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;border-left:3px solid transparent;transition:all 0.2s;text-decoration:none}
+    .sidebar-item:hover{background:rgba(255,255,255,0.06)}
+    .sidebar-item.active{background:rgba(239,159,39,0.12);border-left-color:var(--mustard)}
+    .sidebar-item svg{flex-shrink:0}
+    .sidebar-item-label{font-size:12px;color:#888;white-space:nowrap}
+    .sidebar-item.active .sidebar-item-label{color:#F5F0E8;font-weight:600}
+    .sidebar-badge{margin-left:auto;background:#E24B4A;color:white;font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;min-width:18px;text-align:center}
+    .sidebar-live-dot{margin-left:auto;width:6px;height:6px;border-radius:50%;background:#639922;animation:pulse 1.5s infinite}
+    .sidebar-footer{padding:12px 16px;border-top:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between}
+    .sidebar-user{display:flex;align-items:center;gap:8px}
+    .sidebar-avatar{width:28px;height:28px;border-radius:50%;background:var(--mustard);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--charcoal)}
+    .sidebar-user-name{font-size:11px;font-weight:600;color:#F5F0E8}
+    .sidebar-user-role{font-size:9px;color:#555}
+    .sidebar-signout{cursor:pointer;padding:4px;border-radius:4px;transition:background 0.2s}
+    .sidebar-signout:hover{background:rgba(255,255,255,0.08)}
+
+    /* ── MAIN CONTENT (with sidebar) ── */
+    .main-with-sidebar{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+    .main-no-sidebar{flex:1;display:flex;flex-direction:column;min-height:100vh}
+
+    /* ── TOP HEADER (non-HQ roles) ── */
     .hdr{background:var(--charcoal);padding:13px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid var(--mustard);position:sticky;top:0;z-index:100}
-    .logo{display:flex;align-items:center;gap:10px}
+    .logo{display:flex;align-items:center;gap:10px;cursor:pointer}
     .logo-box{width:34px;height:34px;background:var(--mustard);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:var(--charcoal);flex-shrink:0}
     .logo-text{font-size:15px;font-weight:700;color:#F5F0E8}
     .logo-text span{color:var(--mustard)}
     .hdr-right{display:flex;align-items:center;gap:8px}
     .role-pill{background:var(--mustard);color:var(--charcoal);font-size:10px;padding:3px 10px;font-weight:700;letter-spacing:1px}
-    .session-name{font-size:10px;color:#888;letter-spacing:0.3px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .session-name{font-size:10px;color:#888;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .tl-wrap{display:flex;gap:5px}
     .tl{width:7px;height:7px;border-radius:50%}
     .switch-btn{background:none;border:1px solid rgba(255,255,255,0.15);color:#aaa;font-size:10px;padding:3px 8px;cursor:pointer;transition:all 0.2s}
     .switch-btn:hover{border-color:var(--mustard);color:var(--mustard)}
 
-    /* ── NAV ── */
+    /* ── HQ TOP BAR ── */
+    .hq-topbar{background:var(--white);padding:14px 24px;border-bottom:1px solid #e0ddd5;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:99}
+    .hq-topbar-title{font-size:15px;font-weight:700;color:var(--charcoal)}
+    .hq-topbar-sub{font-size:11px;color:#aaa;margin-top:2px}
+    .hq-live-badge{display:flex;align-items:center;gap:6px;font-size:11px;color:#888}
+    .hq-live-dot{width:7px;height:7px;border-radius:50%;background:#639922;animation:pulse 1.5s infinite}
+
+    /* ── NAV (non-HQ) ── */
     .nav{background:var(--white);display:flex;border-bottom:1px solid #e0ddd5;overflow-x:auto;-webkit-overflow-scrolling:touch;position:sticky;top:60px;z-index:99}
-    .nav button{flex:1;min-width:70px;padding:11px 6px;border:none;background:none;cursor:pointer;font-size:11px;color:#aaa;white-space:nowrap;border-bottom:3px solid transparent;transition:all 0.2s;letter-spacing:0.3px}
+    .nav button{flex:1;min-width:70px;padding:11px 6px;border:none;background:none;cursor:pointer;font-size:11px;color:#aaa;white-space:nowrap;border-bottom:3px solid transparent;transition:all 0.2s}
     .nav button.active{color:var(--charcoal);border-bottom-color:var(--mustard);font-weight:600}
 
     /* ── PAGES ── */
-    .page{display:none;padding:16px;max-width:1200px;margin:0 auto;padding-bottom:90px}
+    .page{display:none;padding:16px;max-width:1100px;margin:0 auto;width:100%;padding-bottom:90px}
     .page.active{display:block}
 
     /* ── BLAST STRIP ── */
@@ -130,12 +168,12 @@
     .stat-dl{background:var(--charcoal);border:2px solid var(--dl-bar)}.stat-dl .num{color:#F5F0E8}.stat-dl .lbl{color:var(--dl-bg)}
 
     /* ── VIEW TOGGLE ── */
-    .view-toggle{display:flex;gap:6px;margin-bottom:0}
+    .view-toggle{display:flex;gap:6px}
     .view-btn{padding:6px 14px;border-radius:20px;border:1.5px solid #ddd8ce;background:var(--white);color:#888;font-size:11px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:5px}
     .view-btn.active{background:var(--charcoal);color:var(--canvas);border-color:var(--charcoal)}
     .view-btn svg{width:13px;height:13px;fill:currentColor}
 
-    /* ── KANBAN BOARD ── */
+    /* ── KANBAN ── */
     .kanban-board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:start}
     @media(max-width:900px){.kanban-board{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media(max-width:500px){.kanban-board{grid-template-columns:1fr}}
@@ -146,18 +184,18 @@
     .kanban-col-title.nr{color:var(--nr-text)}.kanban-col-title.rd{color:var(--rd-text)}.kanban-col-title.tr{color:var(--tr-text)}.kanban-col-title.dl{color:var(--dl-text)}
     .kanban-col-count{font-size:11px;font-weight:700;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center}
     .kanban-col-count.nr{background:var(--nr-text);color:var(--nr-bg)}.kanban-col-count.rd{background:var(--rd-text);color:var(--rd-bg)}.kanban-col-count.tr{background:var(--tr-text);color:var(--tr-bg)}.kanban-col-count.dl{background:var(--dl-text);color:var(--dl-bg)}
-    .kanban-col-body{padding:8px;display:flex;flex-direction:column;gap:8px;min-height:80px;background:rgba(0,0,0,0.02);transition:background 0.2s}
+    .kanban-col-body{padding:8px;display:flex;flex-direction:column;gap:8px;min-height:60px;background:rgba(0,0,0,0.02);transition:background 0.2s}
     .kanban-col-body.drag-over{background:rgba(239,159,39,0.08);outline:2px dashed var(--mustard)}
-    .kanban-card{background:var(--white);border-radius:8px;padding:12px;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;position:relative}
+    .kanban-card{background:var(--white);border-radius:8px;padding:12px;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s}
     .kanban-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,0.1)}
     .kanban-card.nr{border-left:3px solid var(--nr-bar)}.kanban-card.rd{border-left:3px solid var(--rd-bar)}.kanban-card.tr{border-left:3px solid var(--tr-bar)}.kanban-card.dl{border-left:3px solid var(--dl-bar)}
     .kanban-card[draggable=true]{cursor:grab}
-    .kanban-card[draggable=true]:active{cursor:grabbing;opacity:0.8;transform:rotate(1deg)}
+    .kanban-card[draggable=true]:active{cursor:grabbing;opacity:0.8}
     .kanban-card-outlet{font-size:12px;font-weight:700;color:var(--charcoal);margin-bottom:4px}
     .kanban-card-items{font-size:10px;color:#888;margin-bottom:8px;line-height:1.4}
     .kanban-card-bar{height:4px;background:#f0ede6;border-radius:2px;overflow:hidden;margin-bottom:4px}
     .kanban-card-bar-fill{height:100%;border-radius:2px;transition:width 0.3s}
-    .kanban-card-pct{font-size:9px;color:#bbb;letter-spacing:0.3px}
+    .kanban-card-pct{font-size:9px;color:#bbb}
     .kanban-delivered-toggle{width:100%;padding:8px;background:none;border:1.5px dashed #ddd;border-radius:6px;color:#aaa;font-size:11px;cursor:pointer;text-align:center;transition:all 0.2s}
     .kanban-delivered-toggle:hover{border-color:var(--dl-bar);color:var(--dl-text)}
     @keyframes bubbleIn{from{transform:scale(0.9);opacity:0}to{transform:scale(1);opacity:1}}
@@ -165,11 +203,11 @@
     .drag-mode-banner{background:var(--rd-bg);color:var(--rd-text);padding:8px 14px;border-radius:6px;font-size:11px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px}
 
     /* ── FILTERS ── */
-    .filter-row{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
-    .filter-btn{padding:5px 12px;font-size:10px;cursor:pointer;white-space:nowrap;border:1px solid #ddd8ce;background:var(--white);color:#888;border-radius:20px;letter-spacing:0.5px;transition:all 0.2s}
+    .filter-row{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px}
+    .filter-btn{padding:5px 12px;font-size:10px;cursor:pointer;white-space:nowrap;border:1px solid #ddd8ce;background:var(--white);color:#888;border-radius:20px;transition:all 0.2s}
     .filter-btn.active{background:var(--charcoal);color:var(--canvas);border-color:var(--charcoal)}
 
-    /* ── ORDER CARDS (list view) ── */
+    /* ── ORDER CARDS ── */
     .order-card{background:var(--white);padding:14px 16px;border-radius:0 6px 6px 0;margin-bottom:8px;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s}
     .order-card:hover{transform:translateX(2px);box-shadow:2px 2px 12px rgba(0,0,0,0.08)}
     .order-card.nr{border-left:4px solid var(--nr-bar)}.order-card.rd{border-left:4px solid var(--rd-bar)}.order-card.tr{border-left:4px solid var(--tr-bar)}.order-card.dl{border-left:4px solid var(--dl-bar)}
@@ -181,7 +219,7 @@
     .badge-nr{background:var(--nr-bg);color:var(--nr-text)}.badge-rd{background:var(--rd-bg);color:var(--rd-text)}.badge-tr{background:var(--tr-bg);color:var(--tr-text)}.badge-dl{background:var(--dl-bg);color:var(--dl-text)}
     .progress-bar{height:4px;background:#f0ede6;margin-top:10px;border-radius:2px;overflow:hidden}
     .progress-fill{height:100%;border-radius:2px;transition:width 0.4s}
-    .progress-label{font-size:9px;color:#bbb;margin-top:4px;letter-spacing:0.3px;display:flex;justify-content:space-between}
+    .progress-label{font-size:9px;color:#bbb;margin-top:4px;display:flex;justify-content:space-between}
 
     /* ── CARDS & FORMS ── */
     .card{background:var(--white);border-radius:6px;padding:18px;margin-bottom:14px;border-top:3px solid var(--mustard)}
@@ -203,13 +241,13 @@
     .qty-name{font-size:13px;font-weight:600;color:var(--charcoal)}
     .qty-desc{font-size:11px;color:#888;margin-top:2px}
     .qty-controls{display:flex;align-items:center;gap:12px}
-    .qty-btn{width:28px;height:28px;border-radius:50%;border:1.5px solid #ddd;background:white;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+    .qty-btn{width:32px;height:32px;border-radius:50%;border:1.5px solid #ddd;background:white;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
     .qty-btn:hover{border-color:var(--mustard);color:var(--mustard)}
-    .qty-num{min-width:20px;text-align:center;font-weight:700;font-size:14px}
+    .qty-num{min-width:24px;text-align:center;font-weight:700;font-size:16px}
 
     /* ── SCAN ── */
     .scan-area{border:2px dashed #ddd8ce;border-radius:6px;padding:40px 20px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--white)}
-    .scan-area:hover{border-color:var(--mustard);background:#fffdf8}
+    .scan-area:hover{border-color:var(--mustard)}
     .scan-icon{width:48px;height:48px;background:var(--charcoal);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;border-radius:4px}
     .scan-icon svg{width:24px;height:24px;fill:var(--mustard)}
     video{width:100%;border-radius:4px;display:none;margin-bottom:10px}
@@ -261,6 +299,39 @@
     .unit-serial{font-family:monospace;color:var(--charcoal);font-size:11px}
     .back-btn{display:flex;align-items:center;gap:6px;background:none;border:none;cursor:pointer;color:var(--mustard);font-size:12px;font-weight:600;padding:0;margin-bottom:16px}
 
+    /* ── MESSENGER ── */
+    .messenger-layout{display:grid;grid-template-columns:240px 1fr;gap:0;background:var(--white);border-radius:6px;overflow:hidden;border:1px solid #e0ddd5;min-height:500px}
+    @media(max-width:600px){.messenger-layout{grid-template-columns:1fr}}
+    .messenger-sidebar{border-right:1px solid #e0ddd5;overflow-y:auto}
+    .messenger-sidebar-hdr{padding:14px 16px;border-bottom:1px solid #e0ddd5;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#888}
+    .messenger-outlet-item{padding:12px 16px;border-bottom:1px solid #f8f5f0;cursor:pointer;transition:background 0.15s}
+    .messenger-outlet-item:hover{background:var(--canvas)}
+    .messenger-outlet-item.active{background:#FAEEDA}
+    .messenger-outlet-name{font-size:13px;font-weight:600;color:var(--charcoal)}
+    .messenger-outlet-preview{font-size:11px;color:#aaa;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .messenger-unread{background:var(--mustard);color:var(--charcoal);font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;margin-left:auto;flex-shrink:0}
+    .messenger-chat{display:flex;flex-direction:column;height:500px}
+    .messenger-chat-hdr{padding:14px 16px;border-bottom:1px solid #e0ddd5;display:flex;align-items:center;justify-content:space-between}
+    .messenger-chat-title{font-size:13px;font-weight:700;color:var(--charcoal)}
+    .messenger-chat-sub{font-size:11px;color:#aaa;margin-top:2px}
+    .messenger-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:#fafaf8}
+    .msg-bubble{max-width:75%;padding:10px 14px;border-radius:12px;font-size:12px;line-height:1.5}
+    .msg-bubble.sent{background:var(--charcoal);color:#F5F0E8;align-self:flex-end;border-radius:12px 12px 2px 12px}
+    .msg-bubble.received{background:var(--white);color:var(--charcoal);align-self:flex-start;border-radius:12px 12px 12px 2px;border:1px solid #e0ddd5}
+    .msg-meta{font-size:9px;margin-top:4px;opacity:0.6}
+    .msg-bubble.sent .msg-meta{text-align:right;color:#aaa}
+    .msg-bubble.received .msg-meta{color:#888}
+    .quick-replies{padding:8px 16px;display:flex;gap:6px;overflow-x:auto;border-top:1px solid #f0ede6;background:var(--white)}
+    .quick-reply-btn{padding:5px 12px;border-radius:20px;border:1px solid #ddd;background:var(--white);color:#888;font-size:10px;cursor:pointer;white-space:nowrap;transition:all 0.2s;flex-shrink:0}
+    .quick-reply-btn:hover{border-color:var(--mustard);color:var(--mustard)}
+    .messenger-input-row{padding:12px 16px;border-top:1px solid #e0ddd5;display:flex;gap:8px;align-items:flex-end;background:var(--white)}
+    .messenger-input{flex:1;padding:10px 14px;border:1.5px solid #e0ddd5;border-radius:20px;font-size:12px;outline:none;resize:none;font-family:inherit;max-height:80px;transition:border 0.2s}
+    .messenger-input:focus{border-color:var(--mustard)}
+    .messenger-char-count{font-size:10px;color:#aaa;text-align:right;margin-top:4px}
+    .messenger-send{width:36px;height:36px;background:var(--mustard);border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s}
+    .messenger-send:hover{background:#d4891f}
+    .messenger-send svg{width:16px;height:16px;fill:var(--charcoal)}
+
     /* ── QR MODAL ── */
     .qr-modal{position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px}
     .qr-modal-box{background:var(--white);border-radius:6px;max-width:340px;width:100%;overflow:hidden}
@@ -276,7 +347,17 @@
     .qr-code-wrap{display:flex;justify-content:center;margin:14px 0;padding:10px;border:1px solid #f0ede6;background:#fafaf8}
     .qr-modal-actions{padding:12px 16px;display:flex;gap:8px;background:#fafaf8;border-top:1px solid #f0ede6}
 
-    /* ── ADMIN/BLAST ── */
+    /* ── INVENTORY ── */
+    .inventory-table{width:100%;border-collapse:collapse;background:var(--white);border-radius:6px;overflow:hidden}
+    .inventory-table th{background:var(--charcoal);color:var(--canvas);font-size:10px;letter-spacing:0.5px;padding:10px 14px;text-align:left;font-weight:600}
+    .inventory-table td{padding:10px 14px;font-size:12px;border-bottom:1px solid #f8f5f0;color:var(--charcoal)}
+    .inventory-table tr:last-child td{border-bottom:none}
+    .inventory-table tr:hover td{background:var(--canvas)}
+    .cost-badge{font-size:10px;padding:3px 8px;border-radius:12px;font-weight:600;background:var(--rd-bg);color:var(--rd-text)}
+    .margin-good{color:var(--dl-bar);font-weight:700}
+    .margin-warn{color:var(--rd-text);font-weight:700}
+
+    /* ── ADMIN ── */
     .admin-item{background:var(--white);padding:14px 16px;border-radius:0 6px 6px 0;margin-bottom:8px;border-left:4px solid var(--mustard);display:flex;align-items:center;justify-content:space-between;gap:10px}
     .admin-item-name{font-size:13px;font-weight:600;color:var(--charcoal)}
     .admin-item-sub{font-size:11px;color:#888;margin-top:2px}
@@ -288,8 +369,6 @@
     .pin-dur-btn{padding:7px 14px;border-radius:20px;border:1.5px solid #ddd;background:white;cursor:pointer;font-size:11px;font-weight:600;transition:all 0.2s;color:#888}
     .pin-dur-btn.active{background:var(--charcoal);color:var(--canvas);border-color:var(--charcoal)}
     .blast-list-item{background:var(--white);padding:12px 16px;border-radius:0 6px 6px 0;margin-bottom:8px;border-left:4px solid var(--mustard);display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
-    .blast-msg-text{font-size:13px;color:var(--charcoal);font-weight:500;flex:1}
-    .blast-msg-meta{font-size:10px;color:#aaa;margin-top:4px}
 
     /* ── ANALYTICS ── */
     .analytics-filters{background:var(--white);border-radius:6px;padding:14px 16px;margin-bottom:14px;border-top:3px solid var(--mustard)}
@@ -301,20 +380,37 @@
     .bb-warn{color:#854F0B;font-size:10px;font-weight:600}
     .bb-expired{color:#501313;font-size:10px;font-weight:600}
 
-    /* ── FLOAT SCAN BTN ── */
+    /* ── REPORTS ── */
+    .report-card{background:var(--white);border-radius:6px;padding:16px;margin-bottom:10px;border-left:4px solid var(--mustard);display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .report-card-title{font-size:13px;font-weight:600;color:var(--charcoal)}
+    .report-card-sub{font-size:11px;color:#888;margin-top:3px}
+    .report-btns{display:flex;gap:6px;flex-shrink:0}
+
+    /* ── FLOAT SCAN ── */
     .float-scan-btn{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--charcoal);color:var(--mustard);border:2px solid var(--mustard);border-radius:50px;padding:13px 28px;font-size:12px;font-weight:700;cursor:pointer;z-index:98;letter-spacing:1px;box-shadow:0 4px 20px rgba(44,42,37,0.25);transition:all 0.2s;display:none;align-items:center;gap:8px}
     .float-scan-btn:hover{background:var(--mustard);color:var(--charcoal)}
     .float-scan-btn svg{width:16px;height:16px;fill:currentColor}
     @media(max-width:600px){
       .float-scan-btn{display:flex}
       .stat-card .num{font-size:20px}
-      .stat-card .lbl{font-size:8px}
-      .info-grid{grid-template-columns:1fr}
       .hdr .logo-text{display:none}
       .analytics-filter-grid{grid-template-columns:1fr}
+      .info-grid{grid-template-columns:1fr}
+      .sidebar{transform:translateX(-100%)}
+      .main-with-sidebar{margin-left:0}
+      .messenger-layout{grid-template-columns:1fr}
+    }
+    @media(max-width:1024px){
+      .sidebar{transform:translateX(-100%)}
+      .main-with-sidebar{margin-left:0}
+    }
+    @media(min-width:1025px){
+      .sidebar{transform:translateX(0)}
+      .main-with-sidebar{margin-left:220px}
     }
     .empty{text-align:center;padding:40px 20px;color:#bbb;font-size:13px}
     .loader{text-align:center;padding:30px;color:#aaa;font-size:12px;letter-spacing:1px}
+    .section-label{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:10px;margin-top:4px}
   </style>
 </head>
 <body class="day">
@@ -361,14 +457,14 @@
           <div class="role-card-icon outlet-icon">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="#EF9F27"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8l8 5 8-5v10zm-8-7L4 6h16l-8 5z"/></svg>
           </div>
-          <div class="role-card-title">Outlet Staff</div>
+          <div class="role-card-title">Outlet</div>
           <div class="role-card-sub">Orders & delivery</div>
         </div>
         <div class="role-card" onclick="openLogin('kitchen')">
           <div class="role-card-icon kitchen-icon">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="#EF9F27"><path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z"/></svg>
           </div>
-          <div class="role-card-title">Kitchen</div>
+          <div class="role-card-title">Central Kitchen</div>
           <div class="role-card-sub">Prepare & scan</div>
         </div>
         <div class="role-card driver-card" onclick="openLogin('driver')">
@@ -378,11 +474,11 @@
           <div class="role-card-title">Driver</div>
           <div class="role-card-sub">Load & deliver</div>
         </div>
-        <div class="role-card admin-card" onclick="openLogin('admin')">
-          <div class="role-card-icon admin-icon">
+        <div class="role-card hq-card" onclick="openLogin('hq')">
+          <div class="role-card-icon hq-icon">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="#27500A"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
           </div>
-          <div class="role-card-title">Admin</div>
+          <div class="role-card-title">Headquarters</div>
           <div class="role-card-sub">Full access</div>
         </div>
       </div>
@@ -426,258 +522,472 @@
 </div>
 
 <!-- MAIN APP -->
-<div id="main-app" style="display:none">
-  <div class="hdr">
-    <div class="logo">
-      <div class="logo-box">DJ</div>
-      <div class="logo-text">DOJO <span>INTERFACE</span></div>
-    </div>
-    <div class="hdr-right">
-      <div class="session-name" id="session-info"></div>
-      <div class="role-pill" id="role-label">—</div>
-      <div class="tl-wrap">
-        <div class="tl" style="background:#E24B4A"></div>
-        <div class="tl" style="background:#EF9F27"></div>
-        <div class="tl" style="background:#639922"></div>
-      </div>
-      <button class="switch-btn" onclick="switchRole()">Sign Out</button>
-    </div>
-  </div>
-  <nav class="nav" id="main-nav"></nav>
+<div id="main-app">
+  <div class="app-layout">
 
-  <!-- OUTLET PAGES -->
-  <div id="outlet-orders" class="page">
-    <div id="outlet-blast-strip"></div>
-    <div class="stat-grid">
-      <div class="stat-card stat-nr"><div class="num" id="o-nr">-</div><div class="lbl">NOT READY</div></div>
-      <div class="stat-card stat-rd"><div class="num" id="o-rd">-</div><div class="lbl">READY</div></div>
-      <div class="stat-card stat-tr"><div class="num" id="o-tr">-</div><div class="lbl">IN TRANSIT</div></div>
-      <div class="stat-card stat-dl"><div class="num" id="o-dl">-</div><div class="lbl">DELIVERED</div></div>
-    </div>
-    <div id="outlet-order-list"><div class="loader">Loading orders...</div></div>
-  </div>
-
-  <div id="outlet-new-order" class="page">
-    <div class="card">
-      <h2>New Order</h2>
-      <label>Outlet</label>
-      <input type="text" id="outlet-display" readonly style="background:#f8f5f0;color:#888"/>
-      <label>Select Items</label>
-      <div id="menu-items-qty"></div>
-      <label>Notes (optional)</label>
-      <input type="text" id="order-notes" placeholder="e.g. Handle with care"/>
-      <button class="btn btn-primary" onclick="placeOrder()">Place Order</button>
-    </div>
-  </div>
-
-  <div id="outlet-receive" class="page">
-    <div class="card">
-      <h2>Confirm Delivery</h2>
-      <div class="scan-area" id="receive-scan-area" onclick="startCamera('receive')">
-        <div class="scan-icon"><svg viewBox="0 0 24 24"><path d="M3 3h6v2H5v4H3V3zm12 0h6v6h-2V5h-4V3zM3 15h2v4h4v2H3v-6zm16 4h-4v2h6v-6h-2v4zM7 7h4v4H7V7zm6 0h4v4h-4V7zM7 13h4v4H7v-4zm6 0h4v4h-4v-4z"/></svg></div>
-        <div style="font-size:13px;font-weight:600;margin-bottom:4px">Scan QR Code</div>
-        <div style="font-size:11px;color:#888">Tap to scan the QR on the delivery box</div>
-      </div>
-      <video id="receive-video" autoplay playsinline></video>
-      <canvas id="receive-canvas" class="hidden"></canvas>
-      <div id="receive-alert"></div>
-    </div>
-    <div id="receive-confirm" style="display:none">
-      <div class="card">
-        <h2>Confirm Receipt</h2>
-        <div id="receive-order-info" class="alert alert-info"></div>
-        <label>Received By</label>
-        <input type="text" id="receiver-name" placeholder="Your name"/>
-        <label>Photo Proof *</label>
-        <input type="file" id="receive-photo" accept="image/*" capture="environment" onchange="previewPhoto('receive-photo','receive-photo-preview')"/>
-        <img id="receive-photo-preview" class="photo-preview"/>
-        <label>Notes (optional)</label>
-        <input type="text" id="receive-notes" placeholder="e.g. All in good condition"/>
-        <button class="btn btn-success" id="receive-submit-btn" onclick="submitReceived()">Confirm Delivered</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- KITCHEN PAGES -->
-  <div id="kitchen-incoming" class="page">
-    <div class="stat-grid">
-      <div class="stat-card stat-nr"><div class="num" id="k-nr">-</div><div class="lbl">NOT READY</div></div>
-      <div class="stat-card stat-rd"><div class="num" id="k-rd">-</div><div class="lbl">READY</div></div>
-      <div class="stat-card stat-tr"><div class="num" id="k-tr">-</div><div class="lbl">IN TRANSIT</div></div>
-      <div class="stat-card stat-dl"><div class="num" id="k-dl">-</div><div class="lbl">DELIVERED</div></div>
-    </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-      <div class="view-toggle">
-        <button class="view-btn active" id="kitchen-list-btn" onclick="setKitchenView('list',this)">
-          <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>List
-        </button>
-        <button class="view-btn" id="kitchen-kanban-btn" onclick="setKitchenView('kanban',this)">
-          <svg viewBox="0 0 24 24"><path d="M4 5h3v14H4V5zm5 0h3v9H9V5zm5 0h3v5h-3V5z"/></svg>Kanban
-        </button>
-      </div>
-      <div class="filter-row" style="margin-bottom:0">
-        <button class="filter-btn active" onclick="filterKitchen('all',this)">All</button>
-        <button class="filter-btn" onclick="filterKitchen('not_ready',this)">Not Ready</button>
-        <button class="filter-btn" onclick="filterKitchen('ready',this)">Ready</button>
-      </div>
-    </div>
-    <div id="kitchen-list-view"><div id="kitchen-order-list"><div class="loader">Loading...</div></div></div>
-    <div id="kitchen-kanban-view" style="display:none"><div id="kitchen-kanban-board"></div></div>
-  </div>
-
-  <div id="kitchen-scan" class="page">
-    <div class="card">
-      <h2>Scan Cake QR</h2>
-      <div class="scan-area" id="kitchen-scan-area" onclick="startCamera('kitchen')">
-        <div class="scan-icon"><svg viewBox="0 0 24 24"><path d="M3 3h6v2H5v4H3V3zm12 0h6v6h-2V5h-4V3zM3 15h2v4h4v2H3v-6zm16 4h-4v2h6v-6h-2v4zM7 7h4v4H7V7zm6 0h4v4h-4V7zM7 13h4v4H7v-4zm6 0h4v4h-4v-4z"/></svg></div>
-        <div style="font-size:13px;font-weight:600;margin-bottom:4px">Scan Cake QR</div>
-        <div style="font-size:11px;color:#888">Tap to scan a cake QR sticker</div>
-      </div>
-      <video id="kitchen-video" autoplay playsinline></video>
-      <canvas id="kitchen-canvas" class="hidden"></canvas>
-      <div id="kitchen-scan-alert"></div>
-    </div>
-  </div>
-
-  <div id="kitchen-blast" class="page">
-    <div class="blast-compose">
-      <h2>Send Blast Notification</h2>
-      <label>Message</label>
-      <textarea id="blast-message" rows="3" placeholder="e.g. Delivery for Outlet 3 delayed by 1 hour."></textarea>
-      <label>Pin Duration</label>
-      <div class="pin-duration-row">
-        <button class="pin-dur-btn active" onclick="selectDuration(4,this)">4 hours</button>
-        <button class="pin-dur-btn" onclick="selectDuration(8,this)">8 hours</button>
-        <button class="pin-dur-btn" onclick="selectDuration(12,this)">12 hours</button>
-      </div>
-      <button class="btn btn-mustard" onclick="sendBlast('kitchen')">Send to All Outlets</button>
-    </div>
-    <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:10px">Active Notifications</div>
-    <div id="blast-list"><div class="loader">Loading...</div></div>
-  </div>
-
-  <!-- DRIVER PAGES -->
-  <div id="driver-ready" class="page">
-    <div id="driver-order-list"><div class="loader">Loading...</div></div>
-  </div>
-  <div id="driver-scan" class="page">
-    <div class="card">
-      <h2>Scan to Load</h2>
-      <div class="alert alert-warning" style="margin-bottom:14px;font-size:12px">Scan each cake QR to confirm loaded. Order moves to In Transit only after ALL cakes scanned.</div>
-      <div class="scan-area" id="driver-scan-area" onclick="startCamera('driver')">
-        <div class="scan-icon"><svg viewBox="0 0 24 24"><path d="M3 3h6v2H5v4H3V3zm12 0h6v6h-2V5h-4V3zM3 15h2v4h4v2H3v-6zm16 4h-4v2h6v-6h-2v4zM7 7h4v4H7V7zm6 0h4v4h-4V7zM7 13h4v4H7v-4zm6 0h4v4h-4v-4z"/></svg></div>
-        <div style="font-size:13px;font-weight:600;margin-bottom:4px">Scan Cake QR</div>
-        <div style="font-size:11px;color:#888">Point at QR sticker on each box</div>
-      </div>
-      <video id="driver-video" autoplay playsinline></video>
-      <canvas id="driver-canvas" class="hidden"></canvas>
-      <div id="driver-scan-alert"></div>
-    </div>
-  </div>
-
-  <!-- ADMIN PAGES -->
-  <div id="admin-dashboard" class="page">
-    <div class="stat-grid">
-      <div class="stat-card stat-nr"><div class="num" id="a-nr">-</div><div class="lbl">NOT READY</div></div>
-      <div class="stat-card stat-rd"><div class="num" id="a-rd">-</div><div class="lbl">READY</div></div>
-      <div class="stat-card stat-tr"><div class="num" id="a-tr">-</div><div class="lbl">IN TRANSIT</div></div>
-      <div class="stat-card stat-dl"><div class="num" id="a-dl">-</div><div class="lbl">DELIVERED</div></div>
-    </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-      <div class="view-toggle">
-        <button class="view-btn active" id="admin-list-btn" onclick="setAdminView('list',this)">
-          <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>List
-        </button>
-        <button class="view-btn" id="admin-kanban-btn" onclick="setAdminView('kanban',this)">
-          <svg viewBox="0 0 24 24"><path d="M4 5h3v14H4V5zm5 0h3v9H9V5zm5 0h3v5h-3V5z"/></svg>Kanban
-        </button>
-      </div>
-      <div id="admin-drag-status"></div>
-    </div>
-    <div id="admin-list-view">
-      <div class="filter-row">
-        <button class="filter-btn active" onclick="filterAdmin('all',this)">All</button>
-        <button class="filter-btn" onclick="filterAdmin('not_ready',this)">Not Ready</button>
-        <button class="filter-btn" onclick="filterAdmin('ready',this)">Ready</button>
-        <button class="filter-btn" onclick="filterAdmin('in_transit',this)">In Transit</button>
-        <button class="filter-btn" onclick="filterAdmin('delivered',this)">Delivered</button>
-      </div>
-      <div id="admin-order-list"><div class="loader">Loading...</div></div>
-    </div>
-    <div id="admin-kanban-view" style="display:none"><div id="admin-kanban-board"></div></div>
-  </div>
-
-  <div id="admin-analytics" class="page">
-    <div class="analytics-filters">
-      <h3>Filters</h3>
-      <div class="analytics-filter-grid">
-        <div><label>From Date</label><input type="date" id="filter-from"/></div>
-        <div><label>To Date</label><input type="date" id="filter-to"/></div>
-        <div><label>Outlet</label><select id="filter-outlet"><option value="">All Outlets</option></select></div>
-        <div><label>Driver</label><select id="filter-driver"><option value="">All Drivers</option></select></div>
-        <div><label>Speed</label>
-          <select id="filter-speed">
-            <option value="">All</option>
-            <option value="fast">Fast (below average)</option>
-            <option value="slow">Slow (above average)</option>
-          </select>
+    <!-- HQ SIDEBAR -->
+    <div class="sidebar" id="hq-sidebar" style="display:none">
+      <div class="sidebar-logo" onclick="switchRole()">
+        <div class="sidebar-logo-box">DJ</div>
+        <div>
+          <div class="sidebar-logo-text">DOJO <span>INTERFACE</span></div>
+          <div style="color:#555;font-size:9px;letter-spacing:1.5px;margin-top:1px">OPS PLATFORM</div>
         </div>
       </div>
-      <button class="btn btn-primary" style="margin-top:12px" onclick="applyAnalyticsFilters()">Apply Filters</button>
-    </div>
-    <div id="analytics-content"><div class="loader">Loading analytics...</div></div>
-  </div>
-
-  <div id="admin-blast" class="page">
-    <div class="blast-compose">
-      <h2>Send Blast Notification</h2>
-      <label>Message</label>
-      <textarea id="admin-blast-message" rows="3" placeholder="e.g. All outlets: cake orders delayed 30 minutes today."></textarea>
-      <label>Pin Duration</label>
-      <div class="pin-duration-row">
-        <button class="pin-dur-btn active" onclick="selectAdminDuration(4,this)">4 hours</button>
-        <button class="pin-dur-btn" onclick="selectAdminDuration(8,this)">8 hours</button>
-        <button class="pin-dur-btn" onclick="selectAdminDuration(12,this)">12 hours</button>
+      <div class="sidebar-nav" id="sidebar-nav">
+        <div class="sidebar-item active" onclick="hqNav('hq-orders',this)" id="sb-orders">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#EF9F27"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></svg>
+          <span class="sidebar-item-label">My Orders</span>
+          <div class="sidebar-live-dot"></div>
+        </div>
+        <div class="sidebar-item" onclick="hqNav('hq-board',this)" id="sb-board">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#666"><path d="M3 3h8v8H3V3zm0 10h8v8H3v-8zm10-10h8v8h-8V3zm0 10h8v8h-8v-8z"/></svg>
+          <span class="sidebar-item-label">Live Board</span>
+        </div>
+        <div class="sidebar-item" onclick="hqNav('hq-inventory',this)" id="sb-inventory">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#666"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+          <span class="sidebar-item-label">Inventory & Revenue</span>
+        </div>
+        <div class="sidebar-item" onclick="hqNav('hq-analytics',this)" id="sb-analytics">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#666"><path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/></svg>
+          <span class="sidebar-item-label">Analytics</span>
+        </div>
+        <div class="sidebar-item" onclick="hqNav('hq-messenger',this)" id="sb-messenger">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#666"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+          <span class="sidebar-item-label">Messenger</span>
+          <div class="sidebar-badge" id="msg-badge" style="display:none">0</div>
+        </div>
+        <div class="sidebar-item" onclick="hqNav('hq-manager',this)" id="sb-manager">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#666"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+          <span class="sidebar-item-label">Manager</span>
+        </div>
+        <div class="sidebar-item" onclick="hqNav('hq-reports',this)" id="sb-reports">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#666"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+          <span class="sidebar-item-label">Reports</span>
+        </div>
       </div>
-      <button class="btn btn-mustard" onclick="sendBlast('admin')">Send to All Outlets</button>
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <div class="sidebar-avatar">HQ</div>
+          <div>
+            <div class="sidebar-user-name">Headquarters</div>
+            <div class="sidebar-user-role" id="sidebar-staff-name">Admin</div>
+          </div>
+        </div>
+        <div class="sidebar-signout" onclick="switchRole()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#555"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+        </div>
+      </div>
     </div>
-    <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:10px">Active Notifications</div>
-    <div id="admin-blast-list"><div class="loader">Loading...</div></div>
-  </div>
 
-  <div id="admin-manager" class="page">
-    <div class="add-form">
-      <h2 style="margin-bottom:10px">Add Outlet</h2>
-      <label>Name</label><input type="text" id="new-outlet-name" placeholder="e.g. Pavilion KL"/>
-      <label>PIN (optional)</label><input type="text" id="new-outlet-pin" placeholder="4-digit PIN" maxlength="4"/>
-      <button class="btn btn-mustard" onclick="addOutlet()">Add Outlet</button>
-    </div>
-    <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:10px">Outlets</div>
-    <div id="outlets-list"><div class="loader">Loading...</div></div>
-    <div class="add-form" style="margin-top:20px">
-      <h2 style="margin-bottom:10px">Add Menu Item</h2>
-      <label>Name</label><input type="text" id="new-item-name" placeholder="e.g. Chocolate Fudge Cake"/>
-      <label>Description</label><input type="text" id="new-item-desc" placeholder="e.g. Rich chocolate sponge"/>
-      <label>Shelf Life (days)</label><input type="number" id="new-item-shelf" value="4" min="1" max="30"/>
-      <button class="btn btn-mustard" onclick="addMenuItem()">Add Item</button>
-    </div>
-    <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:10px;margin-top:4px">Menu Items</div>
-    <div id="menu-list"><div class="loader">Loading...</div></div>
-  </div>
+    <!-- CONTENT AREA -->
+    <div id="content-wrap" class="main-no-sidebar">
 
-  <!-- ORDER DETAIL -->
-  <div id="order-detail" class="page">
-    <button class="back-btn" onclick="goBack()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back
-    </button>
-    <div id="order-detail-content"><div class="loader">Loading...</div></div>
-  </div>
+      <!-- NON-HQ HEADER -->
+      <div class="hdr" id="main-hdr" style="display:none">
+        <div class="logo" onclick="switchRole()">
+          <div class="logo-box">DJ</div>
+          <div class="logo-text">DOJO <span>INTERFACE</span></div>
+        </div>
+        <div class="hdr-right">
+          <div class="session-name" id="session-info"></div>
+          <div class="role-pill" id="role-label">—</div>
+          <div class="tl-wrap">
+            <div class="tl" style="background:#E24B4A"></div>
+            <div class="tl" style="background:#EF9F27"></div>
+            <div class="tl" style="background:#639922"></div>
+          </div>
+          <button class="switch-btn" onclick="switchRole()">Sign Out</button>
+        </div>
+      </div>
 
-  <!-- TRACKING PAGE -->
-  <div id="tracking-page" class="page">
-    <div id="tracking-content"><div class="loader">Loading...</div></div>
-  </div>
-</div>
+      <!-- HQ TOP BAR -->
+      <div class="hq-topbar" id="hq-topbar" style="display:none">
+        <div>
+          <div class="hq-topbar-title" id="hq-page-title">My Orders</div>
+          <div class="hq-topbar-sub" id="hq-page-sub"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="hq-live-badge"><div class="hq-live-dot"></div>Live</div>
+          <div class="session-name" id="hq-session-info"></div>
+        </div>
+      </div>
+
+      <nav class="nav" id="main-nav" style="display:none"></nav>
+
+      <!-- ══ OUTLET PAGES ══ -->
+      <div id="outlet-orders" class="page">
+        <div id="outlet-blast-strip"></div>
+        <div class="stat-grid">
+          <div class="stat-card stat-nr"><div class="num" id="o-nr">-</div><div class="lbl">NOT READY</div></div>
+          <div class="stat-card stat-rd"><div class="num" id="o-rd">-</div><div class="lbl">READY</div></div>
+          <div class="stat-card stat-tr"><div class="num" id="o-tr">-</div><div class="lbl">IN TRANSIT</div></div>
+          <div class="stat-card stat-dl"><div class="num" id="o-dl">-</div><div class="lbl">DELIVERED</div></div>
+        </div>
+        <div id="outlet-order-list"><div class="loader">Loading orders...</div></div>
+      </div>
+
+      <div id="outlet-new-order" class="page">
+        <div class="card">
+          <h2>New Order</h2>
+          <label>Outlet</label>
+          <input type="text" id="outlet-display" readonly style="background:#f8f5f0;color:#888"/>
+          <div id="order-cutoff-warning" style="display:none" class="alert alert-warning"></div>
+          <div id="order-blockout-warning" style="display:none" class="alert alert-error"></div>
+          <label>Select Items</label>
+          <div id="menu-items-qty"></div>
+          <label>Notes (optional)</label>
+          <input type="text" id="order-notes" placeholder="e.g. Handle with care"/>
+          <button class="btn btn-primary" id="place-order-btn" onclick="placeOrder()">Place Order</button>
+        </div>
+      </div>
+
+      <div id="outlet-receive" class="page">
+        <div class="card">
+          <h2>Confirm Delivery</h2>
+          <div class="scan-area" id="receive-scan-area" onclick="startCamera('receive')">
+            <div class="scan-icon"><svg viewBox="0 0 24 24"><path d="M3 3h6v2H5v4H3V3zm12 0h6v6h-2V5h-4V3zM3 15h2v4h4v2H3v-6zm16 4h-4v2h6v-6h-2v4zM7 7h4v4H7V7zm6 0h4v4h-4V7zM7 13h4v4H7v-4zm6 0h4v4h-4v-4z"/></svg></div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:4px">Scan QR Code</div>
+            <div style="font-size:11px;color:#888">Tap to scan the QR on the delivery box</div>
+          </div>
+          <video id="receive-video" autoplay playsinline></video>
+          <canvas id="receive-canvas" class="hidden"></canvas>
+          <div id="receive-alert"></div>
+        </div>
+        <div id="receive-confirm" style="display:none">
+          <div class="card">
+            <h2>Confirm Receipt</h2>
+            <div id="receive-order-info" class="alert alert-info"></div>
+            <label>Received By</label>
+            <input type="text" id="receiver-name" placeholder="Your name"/>
+            <label>Photo Proof *</label>
+            <input type="file" id="receive-photo" accept="image/*" capture="environment" onchange="previewPhoto('receive-photo','receive-photo-preview')"/>
+            <img id="receive-photo-preview" class="photo-preview"/>
+            <label>Notes (optional)</label>
+            <input type="text" id="receive-notes" placeholder="e.g. All in good condition"/>
+            <button class="btn btn-success" id="receive-submit-btn" onclick="submitReceived()">Confirm Delivered</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="outlet-messages" class="page">
+        <div class="card">
+          <h2>Messages</h2>
+          <div id="outlet-blast-strip-msgs"></div>
+          <div id="outlet-msg-thread"><div class="loader">Loading messages...</div></div>
+          <div class="quick-replies" id="outlet-quick-replies">
+            <button class="quick-reply-btn" onclick="sendQuickReply('Delivery received — all good')">✓ All good</button>
+            <button class="quick-reply-btn" onclick="sendQuickReply('Delivery received — item damaged')">⚠ Item damaged</button>
+            <button class="quick-reply-btn" onclick="sendQuickReply('Delivery received — item missing')">⚠ Item missing</button>
+            <button class="quick-reply-btn" onclick="sendQuickReply('Running late — please advise')">⏱ Running late</button>
+          </div>
+          <div class="messenger-input-row" style="padding:12px 0 0">
+            <textarea class="messenger-input" id="outlet-msg-input" placeholder="Type a message..." maxlength="300" rows="1" oninput="updateCharCount('outlet-msg-input','outlet-char-count')"></textarea>
+            <button class="messenger-send" onclick="sendOutletMessage()">
+              <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            </button>
+          </div>
+          <div class="messenger-char-count" id="outlet-char-count">300 characters remaining</div>
+        </div>
+      </div>
+
+      <!-- ══ KITCHEN PAGES ══ -->
+      <div id="kitchen-incoming" class="page">
+        <div class="stat-grid">
+          <div class="stat-card stat-nr"><div class="num" id="k-nr">-</div><div class="lbl">NOT READY</div></div>
+          <div class="stat-card stat-rd"><div class="num" id="k-rd">-</div><div class="lbl">READY</div></div>
+          <div class="stat-card stat-tr"><div class="num" id="k-tr">-</div><div class="lbl">IN TRANSIT</div></div>
+          <div class="stat-card stat-dl"><div class="num" id="k-dl">-</div><div class="lbl">DELIVERED</div></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+          <div class="view-toggle">
+            <button class="view-btn active" id="kitchen-list-btn" onclick="setKitchenView('list',this)">
+              <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>List
+            </button>
+            <button class="view-btn" id="kitchen-kanban-btn" onclick="setKitchenView('kanban',this)">
+              <svg viewBox="0 0 24 24"><path d="M4 5h3v14H4V5zm5 0h3v9H9V5zm5 0h3v5h-3V5z"/></svg>Kanban
+            </button>
+          </div>
+          <div class="filter-row" style="margin-bottom:0">
+            <button class="filter-btn active" onclick="filterKitchen('all',this)">All</button>
+            <button class="filter-btn" onclick="filterKitchen('not_ready',this)">Not Ready</button>
+            <button class="filter-btn" onclick="filterKitchen('ready',this)">Ready</button>
+          </div>
+        </div>
+        <div id="kitchen-list-view"><div id="kitchen-order-list"><div class="loader">Loading...</div></div></div>
+        <div id="kitchen-kanban-view" style="display:none"><div id="kitchen-kanban-board"></div></div>
+      </div>
+
+      <div id="kitchen-scan" class="page">
+        <div class="card">
+          <h2>Scan Item QR</h2>
+          <div class="scan-area" id="kitchen-scan-area" onclick="startCamera('kitchen')">
+            <div class="scan-icon"><svg viewBox="0 0 24 24"><path d="M3 3h6v2H5v4H3V3zm12 0h6v6h-2V5h-4V3zM3 15h2v4h4v2H3v-6zm16 4h-4v2h6v-6h-2v4zM7 7h4v4H7V7zm6 0h4v4h-4V7zM7 13h4v4H7v-4zm6 0h4v4h-4v-4z"/></svg></div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:4px">Scan Item QR</div>
+            <div style="font-size:11px;color:#888">Tap to scan an item QR sticker</div>
+          </div>
+          <video id="kitchen-video" autoplay playsinline></video>
+          <canvas id="kitchen-canvas" class="hidden"></canvas>
+          <div id="kitchen-scan-alert"></div>
+        </div>
+      </div>
+
+      <div id="kitchen-blast" class="page">
+        <div class="blast-compose">
+          <h2>Send Broadcast</h2>
+          <label>Message</label>
+          <textarea id="blast-message" rows="3" placeholder="e.g. Delivery for Outlet 3 delayed by 1 hour." maxlength="200" oninput="updateCharCount('blast-message','blast-char-count')"></textarea>
+          <div class="messenger-char-count" id="blast-char-count">200 characters remaining</div>
+          <label>Pin Duration</label>
+          <div class="pin-duration-row">
+            <button class="pin-dur-btn active" onclick="selectDuration(4,this)">4 hours</button>
+            <button class="pin-dur-btn" onclick="selectDuration(8,this)">8 hours</button>
+            <button class="pin-dur-btn" onclick="selectDuration(12,this)">12 hours</button>
+          </div>
+          <button class="btn btn-mustard" onclick="sendBlast('kitchen')">Send to All Outlets</button>
+        </div>
+        <div class="section-label">Active Broadcasts</div>
+        <div id="blast-list"><div class="loader">Loading...</div></div>
+      </div>
+
+      <!-- ══ DRIVER PAGES ══ -->
+      <div id="driver-ready" class="page">
+        <div id="driver-order-list"><div class="loader">Loading...</div></div>
+      </div>
+      <div id="driver-scan" class="page">
+        <div class="card">
+          <h2>Scan to Load</h2>
+          <div class="alert alert-warning" style="margin-bottom:14px;font-size:12px">Scan each item QR to confirm loaded. Order moves to In Transit only after ALL items scanned.</div>
+          <div class="scan-area" id="driver-scan-area" onclick="startCamera('driver')">
+            <div class="scan-icon"><svg viewBox="0 0 24 24"><path d="M3 3h6v2H5v4H3V3zm12 0h6v6h-2V5h-4V3zM3 15h2v4h4v2H3v-6zm16 4h-4v2h6v-6h-2v4zM7 7h4v4H7V7zm6 0h4v4h-4V7zM7 13h4v4H7v-4zm6 0h4v4h-4v-4z"/></svg></div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:4px">Scan Item QR</div>
+            <div style="font-size:11px;color:#888">Point at QR sticker on each box</div>
+          </div>
+          <video id="driver-video" autoplay playsinline></video>
+          <canvas id="driver-canvas" class="hidden"></canvas>
+          <div id="driver-scan-alert"></div>
+        </div>
+      </div>
+
+      <!-- ══ HQ PAGES ══ -->
+      <div id="hq-orders" class="page">
+        <div class="stat-grid">
+          <div class="stat-card stat-nr"><div class="num" id="a-nr">-</div><div class="lbl">NOT READY</div></div>
+          <div class="stat-card stat-rd"><div class="num" id="a-rd">-</div><div class="lbl">READY</div></div>
+          <div class="stat-card stat-tr"><div class="num" id="a-tr">-</div><div class="lbl">IN TRANSIT</div></div>
+          <div class="stat-card stat-dl"><div class="num" id="a-dl">-</div><div class="lbl">DELIVERED</div></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+          <div class="view-toggle">
+            <button class="view-btn active" id="hq-list-btn" onclick="setHQView('list',this)">
+              <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>List
+            </button>
+            <button class="view-btn" id="hq-kanban-btn" onclick="setHQView('kanban',this)">
+              <svg viewBox="0 0 24 24"><path d="M4 5h3v14H4V5zm5 0h3v9H9V5zm5 0h3v5h-3V5z"/></svg>Kanban
+            </button>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div id="hq-drag-status"></div>
+          </div>
+        </div>
+        <div id="hq-list-view">
+          <div class="filter-row">
+            <button class="filter-btn active" onclick="filterHQ('all',this)">All</button>
+            <button class="filter-btn" onclick="filterHQ('not_ready',this)">Not Ready</button>
+            <button class="filter-btn" onclick="filterHQ('ready',this)">Ready</button>
+            <button class="filter-btn" onclick="filterHQ('in_transit',this)">In Transit</button>
+            <button class="filter-btn" onclick="filterHQ('delivered',this)">Delivered</button>
+          </div>
+          <div id="hq-order-list"><div class="loader">Loading...</div></div>
+        </div>
+        <div id="hq-kanban-view" style="display:none"><div id="hq-kanban-board"></div></div>
+      </div>
+
+      <div id="hq-board" class="page">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+          <div id="hq-board-drag-status"></div>
+        </div>
+        <div id="hq-live-board"></div>
+      </div>
+
+      <div id="hq-inventory" class="page">
+        <div class="stat-grid">
+          <div class="stat-card stat-nr"><div class="num" id="inv-units">-</div><div class="lbl">TOTAL UNITS OUT</div></div>
+          <div class="stat-card stat-rd"><div class="num" id="inv-cost">-</div><div class="lbl">TOTAL COST (RM)</div></div>
+          <div class="stat-card stat-tr"><div class="num" id="inv-rev">-</div><div class="lbl">EST. REVENUE (RM)</div></div>
+          <div class="stat-card stat-dl"><div class="num" id="inv-margin">-</div><div class="lbl">EST. MARGIN (RM)</div></div>
+        </div>
+        <div id="inventory-content"><div class="loader">Loading inventory...</div></div>
+      </div>
+
+      <div id="hq-analytics" class="page">
+        <div class="analytics-filters">
+          <h3>Filters</h3>
+          <div class="analytics-filter-grid">
+            <div><label>From Date</label><input type="date" id="filter-from"/></div>
+            <div><label>To Date</label><input type="date" id="filter-to"/></div>
+            <div><label>Outlet</label><select id="filter-outlet"><option value="">All Outlets</option></select></div>
+            <div><label>Driver</label><select id="filter-driver"><option value="">All Drivers</option></select></div>
+            <div><label>Speed</label>
+              <select id="filter-speed">
+                <option value="">All</option>
+                <option value="fast">Fast (below average)</option>
+                <option value="slow">Slow (above average)</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-primary" style="margin-top:12px" onclick="applyAnalyticsFilters()">Apply Filters</button>
+        </div>
+        <div id="analytics-content"><div class="loader">Loading analytics...</div></div>
+      </div>
+
+      <div id="hq-messenger" class="page">
+        <div class="blast-compose" style="margin-bottom:14px">
+          <h2>Send Broadcast</h2>
+          <textarea id="admin-blast-message" rows="2" placeholder="Broadcast to all outlets..." maxlength="200" oninput="updateCharCount('admin-blast-message','admin-blast-char-count')"></textarea>
+          <div class="messenger-char-count" id="admin-blast-char-count">200 characters remaining</div>
+          <div class="pin-duration-row">
+            <button class="pin-dur-btn active" onclick="selectAdminDuration(4,this)">4 hrs</button>
+            <button class="pin-dur-btn" onclick="selectAdminDuration(8,this)">8 hrs</button>
+            <button class="pin-dur-btn" onclick="selectAdminDuration(12,this)">12 hrs</button>
+          </div>
+          <button class="btn btn-mustard" onclick="sendBlast('hq')">Broadcast to All</button>
+        </div>
+        <div class="section-label">Direct Messages</div>
+        <div class="messenger-layout">
+          <div class="messenger-sidebar">
+            <div class="messenger-sidebar-hdr">Outlets</div>
+            <div id="messenger-outlet-list"><div class="loader">Loading...</div></div>
+          </div>
+          <div class="messenger-chat" id="messenger-chat-area">
+            <div style="flex:1;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:13px">Select an outlet to view messages</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="hq-manager" class="page">
+        <div class="add-form">
+          <h2 style="margin-bottom:10px">Add Outlet</h2>
+          <label>Name</label><input type="text" id="new-outlet-name" placeholder="e.g. Pavilion KL"/>
+          <label>PIN (optional)</label><input type="text" id="new-outlet-pin" placeholder="4-digit PIN" maxlength="4"/>
+          <button class="btn btn-mustard" onclick="addOutlet()">Add Outlet</button>
+        </div>
+        <div class="section-label">Outlets</div>
+        <div id="outlets-list"><div class="loader">Loading...</div></div>
+
+        <div class="add-form" style="margin-top:20px">
+          <h2 style="margin-bottom:10px">Add Menu Item</h2>
+          <label>Name</label><input type="text" id="new-item-name" placeholder="e.g. Chocolate Fudge Cake"/>
+          <label>Description</label><input type="text" id="new-item-desc" placeholder="e.g. Rich chocolate sponge"/>
+          <label>Unit Type</label>
+          <select id="new-item-unit">
+            <option value="unit">Unit (whole item)</option>
+            <option value="serving">Serving (per slice/piece)</option>
+            <option value="kg">Kilogram</option>
+            <option value="litre">Litre</option>
+            <option value="box">Box</option>
+            <option value="bottle">Bottle</option>
+          </select>
+          <label>Servings per Unit</label><input type="number" id="new-item-servings" value="1" min="1"/>
+          <label>Shelf Life (days)</label><input type="number" id="new-item-shelf" value="4" min="1" max="30"/>
+          <button class="btn btn-mustard" onclick="addMenuItem()">Add Item</button>
+        </div>
+        <div class="section-label" style="margin-top:4px">Menu Items</div>
+        <div id="menu-list"><div class="loader">Loading...</div></div>
+
+        <div class="add-form" style="margin-top:20px">
+          <h2 style="margin-bottom:10px">Order Settings</h2>
+          <label>Cut-off Time</label>
+          <input type="time" id="cutoff-time" value="17:00"/>
+          <label>Cut-off Type</label>
+          <select id="cutoff-type">
+            <option value="hard">Hard cut-off (orders blocked after time)</option>
+            <option value="soft">Soft cut-off (orders allowed but flagged as LATE)</option>
+          </select>
+          <button class="btn btn-mustard" onclick="saveCutoffSettings()">Save Settings</button>
+        </div>
+
+        <div class="add-form" style="margin-top:20px">
+          <h2 style="margin-bottom:10px">Blockout Dates</h2>
+          <label>Block Date</label><input type="date" id="new-blockout-date"/>
+          <label>Reason</label><input type="text" id="new-blockout-reason" placeholder="e.g. Public holiday"/>
+          <button class="btn btn-mustard" onclick="addBlockoutDate()">Add Blockout Date</button>
+        </div>
+        <div class="section-label" style="margin-top:4px">Blocked Dates</div>
+        <div id="blockout-list"><div class="loader">Loading...</div></div>
+      </div>
+
+      <div id="hq-reports" class="page">
+        <div class="alert alert-info" style="margin-bottom:16px;font-size:12px">Reports are generated from your Analytics and Inventory data. Select a report type and download.</div>
+        <div class="section-label">Available Reports</div>
+        <div class="report-card">
+          <div>
+            <div class="report-card-title">Delivery Performance Report</div>
+            <div class="report-card-sub">All deliveries, driver times, outlet confirmations</div>
+          </div>
+          <div class="report-btns">
+            <button class="btn btn-sm btn-primary" onclick="downloadReport('delivery','pdf')">PDF</button>
+            <button class="btn btn-sm btn-mustard" onclick="downloadReport('delivery','csv')">Excel</button>
+          </div>
+        </div>
+        <div class="report-card">
+          <div>
+            <div class="report-card-title">Inventory & Revenue Report</div>
+            <div class="report-card-sub">Units produced, delivered, costs, margins per item</div>
+          </div>
+          <div class="report-btns">
+            <button class="btn btn-sm btn-primary" onclick="downloadReport('inventory','pdf')">PDF</button>
+            <button class="btn btn-sm btn-mustard" onclick="downloadReport('inventory','csv')">Excel</button>
+          </div>
+        </div>
+        <div class="report-card">
+          <div>
+            <div class="report-card-title">Outlet Order Summary</div>
+            <div class="report-card-sub">What each outlet ordered, received, and confirmed</div>
+          </div>
+          <div class="report-btns">
+            <button class="btn btn-sm btn-primary" onclick="downloadReport('outlet-summary','pdf')">PDF</button>
+            <button class="btn btn-sm btn-mustard" onclick="downloadReport('outlet-summary','csv')">Excel</button>
+          </div>
+        </div>
+        <div class="report-card">
+          <div>
+            <div class="report-card-title">Driver Performance Report</div>
+            <div class="report-card-sub">Delivery times, routes, and accountability per driver</div>
+          </div>
+          <div class="report-btns">
+            <button class="btn btn-sm btn-primary" onclick="downloadReport('driver','pdf')">PDF</button>
+            <button class="btn btn-sm btn-mustard" onclick="downloadReport('driver','csv')">Excel</button>
+          </div>
+        </div>
+        <div class="report-card" style="border-left-color:var(--tr-bar)">
+          <div>
+            <div class="report-card-title">Message & Accountability Log</div>
+            <div class="report-card-sub">All outlet-HQ communications with timestamps</div>
+          </div>
+          <div class="report-btns">
+            <button class="btn btn-sm btn-primary" onclick="downloadReport('messages','pdf')">PDF</button>
+            <button class="btn btn-sm btn-mustard" onclick="downloadReport('messages','csv')">Excel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ORDER DETAIL -->
+      <div id="order-detail" class="page">
+        <button class="back-btn" onclick="goBack()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back
+        </button>
+        <div id="order-detail-content"><div class="loader">Loading...</div></div>
+      </div>
+
+      <!-- TRACKING PAGE -->
+      <div id="tracking-page" class="page">
+        <div id="tracking-content"><div class="loader">Loading...</div></div>
+      </div>
+
+    </div><!-- end content-wrap -->
+  </div><!-- end app-layout -->
+</div><!-- end main-app -->
 
 <!-- FLOATING SCAN BUTTON -->
 <button class="float-scan-btn" id="float-scan-btn" onclick="floatScan()">
@@ -688,26 +998,27 @@
 <script>
 const SUPABASE_URL='https://nyionuifptqjbegcgnjq.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im55aW9udWlmcHRxamJlZ2NnbmpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNDQxMDYsImV4cCI6MjA4OTgyMDEwNn0.SiQ3q89--6mdpTefQscqAh93jbdYNqLiFI5632mN_bg';
-const ADMIN_PIN='1234';
+const HQ_PIN='1234';
 const{createClient}=supabase;
 const db=createClient(SUPABASE_URL,SUPABASE_KEY);
 
 let currentRole=null,currentOutletId=null,currentOutletName=null,currentStaffName=null;
-let allAdminOrders=[],allKitchenOrders=[],allKitchenFull=[],previousPage=null;
+let allHQOrders=[],allKitchenOrders=[],allKitchenFull=[],previousPage=null;
 let currentReceiveOrderId=null,currentReceiveCakeUnitId=null;
 let menuItems=[],quantities={};
 let cameras={},scanIntervals={};
-let blastDur=4,adminBlastDur=4;
+let blastDur=4,hqBlastDur=4;
 let currentMode='auto';
-let adminView='list',kitchenView='list';
-let adminDragEnabled=false;
-let deliveredExpanded=false;
+let hqView='list',kitchenView='list';
+let hqDragEnabled=false,deliveredExpanded=false;
 let dragOrderId=null,dragFromStatus=null;
+let activeMessengerOutletId=null,activeMessengerOutletName=null;
+let realtimeSubscription=null;
 
 // ── DAY/NIGHT ──
 function applyMode(){
-  const hour=new Date().getHours();
-  const isDay=hour>=6&&hour<18;
+  const h=new Date().getHours();
+  const isDay=h>=6&&h<18;
   document.body.className=currentMode==='auto'?(isDay?'day':'night'):currentMode;
   ['auto','day','night'].forEach(m=>{
     const b=document.getElementById('mode-'+m);
@@ -716,7 +1027,6 @@ function applyMode(){
 }
 function setMode(mode){currentMode=mode;localStorage.setItem('dojoMode',mode);applyMode();}
 
-// ── GREETING ──
 function updateGreeting(){
   const h=new Date().getHours();
   let g='Good morning.',l='MORNING';
@@ -728,37 +1038,49 @@ function updateGreeting(){
   if(lb)lb.textContent=l;
 }
 
+// ── CHAR COUNT ──
+function updateCharCount(inputId,countId){
+  const input=document.getElementById(inputId);
+  const count=document.getElementById(countId);
+  if(!input||!count)return;
+  const max=parseInt(input.getAttribute('maxlength'))||300;
+  const remaining=max-input.value.length;
+  count.textContent=`${remaining} characters remaining`;
+  count.style.color=remaining<50?'#E24B4A':'#aaa';
+}
+
 // ── VIEW TOGGLE ──
 function getDefaultView(){return window.innerWidth>1024?'kanban':'list';}
 
 function initViews(){
   const def=getDefaultView();
-  adminView=def;kitchenView=def;
-  const al=document.getElementById('admin-list-view');
-  const ak=document.getElementById('admin-kanban-view');
-  const kl=document.getElementById('kitchen-list-view');
-  const kk=document.getElementById('kitchen-kanban-view');
-  if(al)al.style.display=def==='list'?'block':'none';
-  if(ak)ak.style.display=def==='kanban'?'block':'none';
-  if(kl)kl.style.display=def==='list'?'block':'none';
-  if(kk)kk.style.display=def==='kanban'?'block':'none';
-  const alb=document.getElementById('admin-list-btn');
-  const akb=document.getElementById('admin-kanban-btn');
-  const klb=document.getElementById('kitchen-list-btn');
-  const kkb=document.getElementById('kitchen-kanban-btn');
-  if(alb)alb.classList.toggle('active',def==='list');
-  if(akb)akb.classList.toggle('active',def==='kanban');
-  if(klb)klb.classList.toggle('active',def==='list');
-  if(kkb)kkb.classList.toggle('active',def==='kanban');
+  hqView=def;kitchenView=def;
+  ['hq-list-view','hq-kanban-view','kitchen-list-view','kitchen-kanban-view'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    el.style.display='none';
+  });
+  const showList=def==='list';
+  const hl=document.getElementById('hq-list-view');const hk=document.getElementById('hq-kanban-view');
+  const kl=document.getElementById('kitchen-list-view');const kk=document.getElementById('kitchen-kanban-view');
+  if(hl)hl.style.display=showList?'block':'none';
+  if(hk)hk.style.display=showList?'none':'block';
+  if(kl)kl.style.display=showList?'block':'none';
+  if(kk)kk.style.display=showList?'none':'block';
+  const hlb=document.getElementById('hq-list-btn');const hkb=document.getElementById('hq-kanban-btn');
+  const klb=document.getElementById('kitchen-list-btn');const kkb=document.getElementById('kitchen-kanban-btn');
+  if(hlb)hlb.classList.toggle('active',showList);
+  if(hkb)hkb.classList.toggle('active',!showList);
+  if(klb)klb.classList.toggle('active',showList);
+  if(kkb)kkb.classList.toggle('active',!showList);
 }
 
-function setAdminView(view,btn){
-  adminView=view;
-  document.getElementById('admin-list-view').style.display=view==='list'?'block':'none';
-  document.getElementById('admin-kanban-view').style.display=view==='kanban'?'block':'none';
-  document.querySelectorAll('#admin-dashboard .view-btn').forEach(b=>b.classList.remove('active'));
+function setHQView(view,btn){
+  hqView=view;
+  document.getElementById('hq-list-view').style.display=view==='list'?'block':'none';
+  document.getElementById('hq-kanban-view').style.display=view==='kanban'?'block':'none';
+  document.querySelectorAll('#hq-orders .view-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  if(view==='kanban'){renderAdminKanban(allAdminOrders);updateDragBanner();}
+  if(view==='kanban'){renderHQKanban(allHQOrders);updateDragBanner();}
 }
 
 function setKitchenView(view,btn){
@@ -772,13 +1094,15 @@ function setKitchenView(view,btn){
 
 // ── KANBAN ──
 function updateDragBanner(){
-  const el=document.getElementById('admin-drag-status');if(!el)return;
-  el.innerHTML=adminDragEnabled
-    ?`<div class="drag-mode-banner"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>Drag mode active</div>`
-    :`<button class="filter-btn" onclick="enableAdminDrag()">Enable Drag</button>`;
+  ['hq-drag-status','hq-board-drag-status'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    el.innerHTML=hqDragEnabled
+      ?`<div class="drag-mode-banner"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>Drag mode active</div>`
+      :`<button class="filter-btn" onclick="enableHQDrag()">Enable Drag</button>`;
+  });
 }
 
-function enableAdminDrag(){adminDragEnabled=true;updateDragBanner();renderAdminKanban(allAdminOrders);}
+function enableHQDrag(){hqDragEnabled=true;updateDragBanner();renderHQKanban(allHQOrders);renderLiveBoard(allHQOrders);}
 
 function renderKanban(containerId,data,canDrag){
   const board=document.getElementById(containerId);if(!board)return;
@@ -798,22 +1122,22 @@ function renderKanban(containerId,data,canDrag){
         <span class="kanban-col-title ${col.sc}">${col.label}</span>
         <span class="kanban-col-count ${col.sc}">${cards.length}</span>
       </div>
-      <div class="kanban-col-body" id="kanban-body-${col.key}" ${dropAttrs}>
+      <div class="kanban-col-body" id="kanban-body-${col.key}-${containerId}" ${dropAttrs}>
         ${isDelivered
-          ?`<button class="kanban-delivered-toggle" id="delivered-toggle-btn" onclick="toggleDelivered(${canDrag})">${cards.length} delivered — tap to expand</button>`
+          ?`<button class="kanban-delivered-toggle" onclick="toggleDelivered(this,'${containerId}',${canDrag})">${cards.length} delivered — tap to expand</button>`
           :cards.map(o=>kanbanCard(o,sMap[o.status],canDrag)).join('')}
       </div>
     </div>`;
   }).join('')}</div>`;
 }
 
-function toggleDelivered(canDrag){
+function toggleDelivered(btn,containerId,canDrag){
+  const body=document.getElementById(`kanban-body-delivered-${containerId}`);
+  const cards=allHQOrders.filter(o=>o.status==='delivered');
   const sMap={not_ready:'nr',ready:'rd',in_transit:'tr',delivered:'dl'};
-  const body=document.getElementById('kanban-body-delivered');
-  const cards=allAdminOrders.filter(o=>o.status==='delivered');
   if(deliveredExpanded){
     deliveredExpanded=false;
-    body.innerHTML=`<button class="kanban-delivered-toggle" id="delivered-toggle-btn" onclick="toggleDelivered(${canDrag})">${cards.length} delivered — tap to expand</button>`;
+    body.innerHTML=`<button class="kanban-delivered-toggle" onclick="toggleDelivered(this,'${containerId}',${canDrag})">${cards.length} delivered — tap to expand</button>`;
   }else{
     deliveredExpanded=true;
     body.innerHTML=`<div class="kanban-delivered-expanded">${cards.map(o=>kanbanCard(o,'dl',canDrag)).join('')}</div>`;
@@ -836,8 +1160,13 @@ function kanbanCard(order,sc,canDrag){
   </div>`;
 }
 
-function renderAdminKanban(data){renderKanban('admin-kanban-board',data,adminDragEnabled);}
+function renderHQKanban(data){renderKanban('hq-kanban-board',data,hqDragEnabled);}
 function renderKitchenKanban(data){renderKanban('kitchen-kanban-board',data,false);}
+
+function renderLiveBoard(data){
+  const board=document.getElementById('hq-live-board');if(!board)return;
+  renderKanban('hq-live-board',data,hqDragEnabled);
+}
 
 function handleKanbanDragStart(event,orderId,fromSc){
   dragOrderId=orderId;dragFromStatus=fromSc;
@@ -847,7 +1176,7 @@ function handleKanbanDragStart(event,orderId,fromSc){
 async function handleKanbanDrop(event,toStatus){
   event.preventDefault();
   document.querySelectorAll('.kanban-col-body').forEach(b=>b.classList.remove('drag-over'));
-  if(!dragOrderId||!adminDragEnabled)return;
+  if(!dragOrderId||!hqDragEnabled)return;
   const sMap={nr:'not_ready',rd:'ready',tr:'in_transit',dl:'delivered'};
   if(sMap[dragFromStatus]===toStatus){dragOrderId=null;return;}
   const update={status:toStatus,override_by:currentStaffName,override_at:new Date().toISOString()};
@@ -857,37 +1186,65 @@ async function handleKanbanDrop(event,toStatus){
   await db.from('orders').update(update).eq('id',dragOrderId);
   await db.from('cake_units').update({status:toStatus}).eq('order_id',dragOrderId);
   dragOrderId=null;dragFromStatus=null;
-  await loadAdminOrders();
+  await loadHQOrders();
+}
+
+// ── REAL-TIME ──
+function setupRealtime(){
+  if(realtimeSubscription)realtimeSubscription.unsubscribe();
+  realtimeSubscription=db.channel('orders-realtime')
+    .on('postgres_changes',{event:'*',schema:'public',table:'orders'},()=>{
+      if(currentRole==='hq')loadHQOrders();
+      else if(currentRole==='kitchen')loadKitchenOrders();
+      else if(currentRole==='driver')loadDriverOrders();
+      else if(currentRole==='outlet')loadOutletOrders();
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'messages'},()=>{
+      if(activeMessengerOutletId)loadMessengerThread(activeMessengerOutletId);
+      loadMessengerOutletList();
+      if(currentRole==='outlet')loadOutletMessages();
+      updateMsgBadge();
+    })
+    .subscribe();
+}
+
+async function updateMsgBadge(){
+  if(currentRole!=='hq')return;
+  const{data}=await db.from('messages').select('id').is('read_at',null).neq('sent_by_role','hq');
+  const count=(data||[]).length;
+  const badge=document.getElementById('msg-badge');
+  if(badge){badge.style.display=count>0?'block':'none';badge.textContent=count;}
 }
 
 // ── BLAST ──
 function selectDuration(hrs,btn){blastDur=hrs;document.querySelectorAll('#kitchen-blast .pin-dur-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
-function selectAdminDuration(hrs,btn){adminBlastDur=hrs;document.querySelectorAll('#admin-blast .pin-dur-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+function selectAdminDuration(hrs,btn){hqBlastDur=hrs;document.querySelectorAll('#hq-messenger .pin-dur-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
 
 async function sendBlast(role){
-  const msgId=role==='admin'?'admin-blast-message':'blast-message';
-  const listId=role==='admin'?'admin-blast-list':'blast-list';
-  const dur=role==='admin'?adminBlastDur:blastDur;
+  const msgId=role==='hq'?'admin-blast-message':'blast-message';
+  const listId=role==='hq'?null:'blast-list';
+  const dur=role==='hq'?hqBlastDur:blastDur;
   const msg=document.getElementById(msgId).value.trim();
   if(!msg){alert('Please enter a message.');return;}
   const expiresAt=new Date(Date.now()+dur*60*60*1000).toISOString();
   await db.from('blast_notifications').insert({message:msg,sent_by:currentStaffName||role,sent_by_role:role,expires_at:expiresAt});
   document.getElementById(msgId).value='';
-  alert('Blast sent!');
-  loadBlastList(listId);
+  if(listId)loadBlastList(listId);
+  showAlert(role==='hq'?'hq-blast-result':'kitchen-blast-result','Broadcast sent!','success');
+  loadActiveBlasts();
 }
 
 async function loadBlastList(containerId){
   const{data}=await db.from('blast_notifications').select('*').gt('expires_at',new Date().toISOString()).order('created_at',{ascending:false});
   const list=document.getElementById(containerId);if(!list)return;
-  if(!data||data.length===0){list.innerHTML='<div class="empty">No active notifications</div>';return;}
+  if(!data||data.length===0){list.innerHTML='<div class="empty">No active broadcasts</div>';return;}
   list.innerHTML=data.map(n=>`
     <div class="blast-list-item">
       <div>
-        <div class="blast-msg-text">${n.message}</div>
-        <div class="blast-msg-meta">By ${n.sent_by} · Expires ${formatDate(n.expires_at)}</div>
+        <div style="font-size:13px;color:var(--charcoal);font-weight:500;flex:1">${n.message}</div>
+        <div style="font-size:10px;color:#aaa;margin-top:4px">By ${n.sent_by} · Expires ${formatDate(n.expires_at)}</div>
       </div>
-      ${currentRole==='admin'?`<button class="btn btn-sm btn-danger" onclick="deleteBlast('${n.id}','${containerId}')">Delete</button>`:''}
+      ${currentRole==='hq'?`<button class="btn btn-sm btn-danger" onclick="deleteBlast('${n.id}','${containerId}')">Delete</button>`:''}
     </div>`).join('');
 }
 
@@ -901,11 +1258,122 @@ async function loadActiveBlasts(){
   const lb=document.getElementById('lobby-blast');
   if(data&&data.length>0){
     if(lb){lb.style.display='block';lb.innerHTML=`<div class="blast-banner"><div class="blast-banner-dot"></div><div>${data[0].message}</div></div>`;}
-    const strip=document.getElementById('outlet-blast-strip');
-    if(strip)strip.innerHTML=`<div class="blast-strip"><div class="blast-strip-dot"></div><div style="flex:1">${data[0].message}</div><button class="blast-strip-close" onclick="this.parentElement.parentElement.innerHTML=''">×</button></div>`;
+    ['outlet-blast-strip','outlet-blast-strip-msgs'].forEach(id=>{
+      const strip=document.getElementById(id);
+      if(strip)strip.innerHTML=`<div class="blast-strip"><div class="blast-strip-dot"></div><div style="flex:1">${data[0].message}</div><button class="blast-strip-close" onclick="this.parentElement.parentElement.innerHTML=''">×</button></div>`;
+    });
   }else{
     if(lb)lb.style.display='none';
   }
+}
+
+// ── MESSENGER ──
+async function loadMessengerOutletList(){
+  const{data:outlets}=await db.from('outlets').select('*').eq('is_active',true).order('name');
+  const list=document.getElementById('messenger-outlet-list');if(!list)return;
+  if(!outlets||outlets.length===0){list.innerHTML='<div class="empty">No outlets</div>';return;}
+  const{data:msgs}=await db.from('messages').select('outlet_id,message,created_at,sent_by_role,read_at').order('created_at',{ascending:false});
+  list.innerHTML=outlets.map(o=>{
+    const lastMsg=msgs?.find(m=>m.outlet_id===o.id);
+    const unread=(msgs||[]).filter(m=>m.outlet_id===o.id&&!m.read_at&&m.sent_by_role!=='hq').length;
+    return`<div class="messenger-outlet-item ${activeMessengerOutletId===o.id?'active':''}" onclick="openMessengerThread('${o.id}','${o.name}')">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div class="messenger-outlet-name">${o.name}</div>
+        ${unread>0?`<div class="messenger-unread">${unread}</div>`:''}
+      </div>
+      <div class="messenger-outlet-preview">${lastMsg?lastMsg.message:'No messages yet'}</div>
+    </div>`;
+  }).join('');
+}
+
+async function openMessengerThread(outletId,outletName){
+  activeMessengerOutletId=outletId;activeMessengerOutletName=outletName;
+  await db.from('messages').update({read_at:new Date().toISOString()}).eq('outlet_id',outletId).is('read_at',null).neq('sent_by_role','hq');
+  loadMessengerOutletList();
+  loadMessengerThread(outletId);
+  updateMsgBadge();
+}
+
+async function loadMessengerThread(outletId){
+  const chatArea=document.getElementById('messenger-chat-area');if(!chatArea)return;
+  const{data:msgs}=await db.from('messages').select('*').eq('outlet_id',outletId).order('created_at',{ascending:true});
+  chatArea.innerHTML=`
+    <div class="messenger-chat-hdr">
+      <div>
+        <div class="messenger-chat-title">${activeMessengerOutletName}</div>
+        <div class="messenger-chat-sub">Direct messages — all conversations are logged</div>
+      </div>
+    </div>
+    <div class="messenger-messages" id="msg-thread-msgs">
+      ${!msgs||msgs.length===0?'<div style="text-align:center;color:#aaa;font-size:12px;padding:20px">No messages yet</div>':
+        msgs.map(m=>{
+          const isHQ=m.sent_by_role==='hq';
+          return`<div>
+            <div class="msg-bubble ${isHQ?'sent':'received'}">
+              ${m.message}
+              <div class="msg-meta">${m.sent_by} · ${formatDate(m.created_at)}</div>
+            </div>
+          </div>`;
+        }).join('')}
+    </div>
+    <div class="messenger-input-row">
+      <textarea class="messenger-input" id="hq-msg-input" placeholder="Reply to ${activeMessengerOutletName}..." maxlength="300" rows="1" oninput="updateCharCount('hq-msg-input','hq-char-count')"></textarea>
+      <button class="messenger-send" onclick="sendHQMessage()">
+        <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+      </button>
+    </div>
+    <div class="messenger-char-count" id="hq-char-count">300 characters remaining</div>`;
+  const msgs_el=document.getElementById('msg-thread-msgs');
+  if(msgs_el)msgs_el.scrollTop=msgs_el.scrollHeight;
+}
+
+async function sendHQMessage(){
+  if(!activeMessengerOutletId)return;
+  const input=document.getElementById('hq-msg-input');
+  const msg=input?.value.trim();
+  if(!msg)return;
+  await db.from('messages').insert({outlet_id:activeMessengerOutletId,sent_by:currentStaffName||'HQ',sent_by_role:'hq',message:msg});
+  input.value='';
+  loadMessengerThread(activeMessengerOutletId);
+  loadMessengerOutletList();
+}
+
+async function loadOutletMessages(){
+  if(!currentOutletId)return;
+  await db.from('messages').update({read_at:new Date().toISOString()}).eq('outlet_id',currentOutletId).is('read_at',null).eq('sent_by_role','hq');
+  const{data:msgs}=await db.from('messages').select('*').eq('outlet_id',currentOutletId).order('created_at',{ascending:true});
+  const thread=document.getElementById('outlet-msg-thread');if(!thread)return;
+  thread.innerHTML=`<div class="messenger-messages" id="outlet-msgs-list" style="max-height:300px;overflow-y:auto;">
+    ${!msgs||msgs.length===0?'<div style="text-align:center;color:#aaa;font-size:12px;padding:20px">No messages yet. Send a message to HQ below.</div>':
+      msgs.map(m=>{
+        const isMe=m.sent_by_role!=='hq';
+        return`<div>
+          <div class="msg-bubble ${isMe?'sent':'received'}">
+            ${m.message}
+            <div class="msg-meta">${m.sent_by} · ${formatDate(m.created_at)}</div>
+          </div>
+        </div>`;
+      }).join('')}
+  </div>`;
+  const el=document.getElementById('outlet-msgs-list');
+  if(el)el.scrollTop=el.scrollHeight;
+}
+
+async function sendOutletMessage(){
+  if(!currentOutletId)return;
+  const input=document.getElementById('outlet-msg-input');
+  const msg=input?.value.trim();
+  if(!msg)return;
+  await db.from('messages').insert({outlet_id:currentOutletId,sent_by:currentStaffName||'Outlet',sent_by_role:'outlet',message:msg});
+  input.value='';
+  updateCharCount('outlet-msg-input','outlet-char-count');
+  loadOutletMessages();
+}
+
+async function sendQuickReply(msg){
+  if(!currentOutletId)return;
+  await db.from('messages').insert({outlet_id:currentOutletId,sent_by:currentStaffName||'Outlet',sent_by_role:'outlet',message:msg,is_quick_reply:true});
+  loadOutletMessages();
 }
 
 // ── ROLE CONFIG ──
@@ -913,23 +1381,18 @@ const ROLES={
   outlet:{label:'OUTLET',tabs:[
     {id:'outlet-orders',label:'My Orders',fn:loadOutletOrders},
     {id:'outlet-new-order',label:'New Order',fn:loadNewOrderForm},
-    {id:'outlet-receive',label:'Receive',fn:()=>{}}
+    {id:'outlet-receive',label:'Receive',fn:()=>{}},
+    {id:'outlet-messages',label:'Messages',fn:loadOutletMessages}
   ]},
   kitchen:{label:'KITCHEN',tabs:[
     {id:'kitchen-incoming',label:'Orders',fn:loadKitchenOrders},
-    {id:'kitchen-scan',label:'Scan Cake',fn:()=>{}},
+    {id:'kitchen-scan',label:'Scan Item',fn:()=>{}},
     {id:'kitchen-blast',label:'Broadcast',fn:()=>loadBlastList('blast-list')}
   ]},
   driver:{label:'DRIVER',tabs:[
     {id:'driver-ready',label:'Ready Orders',fn:loadDriverOrders},
     {id:'driver-scan',label:'Scan to Load',fn:()=>{}}
   ]},
-  admin:{label:'ADMIN',tabs:[
-    {id:'admin-dashboard',label:'Orders',fn:loadAdminOrders},
-    {id:'admin-analytics',label:'Analytics',fn:()=>loadAnalytics()},
-    {id:'admin-blast',label:'Broadcast',fn:()=>loadBlastList('admin-blast-list')},
-    {id:'admin-manager',label:'Manager',fn:loadManager}
-  ]}
 };
 
 // ── LOGIN ──
@@ -942,7 +1405,7 @@ async function openLogin(role){
   document.getElementById('login-name-input').value='';
   [0,1,2,3].forEach(i=>document.getElementById(`pin${i}`).value='');
   if(role==='outlet'){
-    document.getElementById('login-title').textContent='Outlet Staff Sign In';
+    document.getElementById('login-title').textContent='Outlet Sign In';
     document.getElementById('login-sub').textContent='Select your outlet and enter your name';
     document.getElementById('login-outlet-field').style.display='block';
     document.getElementById('login-name-field').style.display='block';
@@ -950,15 +1413,15 @@ async function openLogin(role){
     const sel=document.getElementById('login-outlet-select');
     sel.innerHTML='<option value="">— Select outlet —</option>'+(outlets||[]).map(o=>`<option value="${o.id}">${o.name}</option>`).join('');
   }else if(role==='kitchen'){
-    document.getElementById('login-title').textContent='Kitchen Sign In';
+    document.getElementById('login-title').textContent='Central Kitchen Sign In';
     document.getElementById('login-sub').textContent='Enter your name to continue';
     document.getElementById('login-name-field').style.display='block';
   }else if(role==='driver'){
     document.getElementById('login-title').textContent='Driver Sign In';
     document.getElementById('login-sub').textContent='Enter your name to continue';
     document.getElementById('login-name-field').style.display='block';
-  }else if(role==='admin'){
-    document.getElementById('login-title').textContent='Admin Access';
+  }else if(role==='hq'){
+    document.getElementById('login-title').textContent='Headquarters Access';
     document.getElementById('login-sub').textContent='Enter master PIN';
     document.getElementById('login-pin-field').style.display='block';
     setTimeout(()=>document.getElementById('pin0').focus(),300);
@@ -971,13 +1434,12 @@ function pinNext(i,e){if(e.target.value.length===1&&i<3)document.getElementById(
 function getPin(){return[0,1,2,3].map(i=>document.getElementById(`pin${i}`).value).join('');}
 
 async function submitLogin(){
-  if(loginRole==='admin'){
-    if(getPin()!==ADMIN_PIN){document.getElementById('pin-error').style.display='block';return;}
-    currentRole='admin';currentStaffName='Admin';currentOutletId=null;currentOutletName=null;
+  if(loginRole==='hq'){
+    if(getPin()!==HQ_PIN){document.getElementById('pin-error').style.display='block';return;}
+    currentRole='hq';currentStaffName='Admin';currentOutletId=null;currentOutletName=null;
   }else if(loginRole==='outlet'){
     const sel=document.getElementById('login-outlet-select');
-    const outletId=sel.value;
-    const name=document.getElementById('login-name-input').value.trim();
+    const outletId=sel.value;const name=document.getElementById('login-name-input').value.trim();
     if(!outletId){alert('Please select your outlet.');return;}
     if(!name){alert('Please enter your name.');return;}
     currentRole='outlet';currentStaffName=name;
@@ -992,28 +1454,82 @@ async function submitLogin(){
     currentRole='driver';currentStaffName=name;currentOutletId=null;currentOutletName=null;
   }
   closeLogin();
+  enterApp();
+}
+
+function enterApp(){
   document.getElementById('lobby').style.display='none';
   document.getElementById('main-app').style.display='block';
-  document.getElementById('role-label').textContent=ROLES[currentRole].label;
-  document.getElementById('session-info').textContent=currentStaffName+(currentOutletName?' · '+currentOutletName:'');
-  document.getElementById('float-scan-btn').style.display=currentRole!=='admin'?'flex':'none';
-  buildNav(currentRole);
-  initViews();
-  const first=ROLES[currentRole].tabs[0];
-  showPage(first.id);first.fn();
+
+  if(currentRole==='hq'){
+    document.getElementById('hq-sidebar').style.display='flex';
+    document.getElementById('content-wrap').className='main-with-sidebar';
+    document.getElementById('hq-topbar').style.display='flex';
+    document.getElementById('main-hdr').style.display='none';
+    document.getElementById('main-nav').style.display='none';
+    document.getElementById('hq-session-info').textContent=currentStaffName;
+    document.getElementById('sidebar-staff-name').textContent=currentStaffName;
+    document.getElementById('float-scan-btn').style.display='none';
+    initViews();
+    hqNav('hq-orders',document.getElementById('sb-orders'));
+    setupRealtime();
+    updateMsgBadge();
+  }else{
+    document.getElementById('hq-sidebar').style.display='none';
+    document.getElementById('content-wrap').className='main-no-sidebar';
+    document.getElementById('hq-topbar').style.display='none';
+    document.getElementById('main-hdr').style.display='flex';
+    document.getElementById('main-nav').style.display='flex';
+    document.getElementById('role-label').textContent=ROLES[currentRole].label;
+    document.getElementById('session-info').textContent=currentStaffName+(currentOutletName?' · '+currentOutletName:'');
+    document.getElementById('float-scan-btn').style.display=currentRole!=='hq'?'flex':'none';
+    buildNav(currentRole);
+    initViews();
+    const first=ROLES[currentRole].tabs[0];
+    showPage(first.id);first.fn();
+    setupRealtime();
+  }
   loadActiveBlasts();
 }
 
 function switchRole(){
   currentRole=null;currentStaffName=null;currentOutletId=null;currentOutletName=null;
-  adminDragEnabled=false;deliveredExpanded=false;
+  hqDragEnabled=false;deliveredExpanded=false;activeMessengerOutletId=null;
+  if(realtimeSubscription){realtimeSubscription.unsubscribe();realtimeSubscription=null;}
   document.getElementById('lobby').style.display='flex';
   document.getElementById('main-app').style.display='none';
   document.getElementById('float-scan-btn').style.display='none';
-  stopAllCameras();loadActiveBlasts();
+  stopAllCameras();
+  loadActiveBlasts();
 }
 
-// ── NAV ──
+// ── HQ NAV ──
+function hqNav(pageId,btn){
+  showPage(pageId);
+  document.querySelectorAll('.sidebar-item').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  stopAllCameras();
+  const pageTitles={
+    'hq-orders':'My Orders','hq-board':'Live Board','hq-inventory':'Inventory & Revenue',
+    'hq-analytics':'Analytics','hq-messenger':'Messenger','hq-manager':'Manager','hq-reports':'Reports'
+  };
+  const el=document.getElementById('hq-page-title');
+  if(el)el.textContent=pageTitles[pageId]||'HQ';
+  const now=new Date().toLocaleDateString('en-MY',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const sub=document.getElementById('hq-page-sub');if(sub)sub.textContent=now;
+  const fnMap={
+    'hq-orders':loadHQOrders,
+    'hq-board':()=>{loadHQOrders();},
+    'hq-inventory':loadInventory,
+    'hq-analytics':loadAnalytics,
+    'hq-messenger':()=>{loadMessengerOutletList();loadBlastList('admin-blast-list-inner');},
+    'hq-manager':loadManager,
+    'hq-reports':()=>{}
+  };
+  const fn=fnMap[pageId];if(fn)fn();
+}
+
+// ── NON-HQ NAV ──
 function buildNav(role){
   const nav=document.getElementById('main-nav');
   nav.innerHTML=ROLES[role].tabs.map((t,i)=>
@@ -1032,6 +1548,7 @@ function showPage(id){
 }
 function goBack(){
   if(previousPage){showPage(previousPage);previousPage=null;}
+  else if(currentRole==='hq'){hqNav('hq-orders',document.getElementById('sb-orders'));}
   else if(currentRole){const first=ROLES[currentRole].tabs[0];showPage(first.id);first.fn();}
 }
 
@@ -1087,14 +1604,19 @@ function stopAllCameras(){['kitchen','driver','receive'].forEach(t=>stopCamera(t
 // ── OUTLET: NEW ORDER ──
 async function loadNewOrderForm(){
   document.getElementById('outlet-display').value=currentOutletName||'—';
+  await checkOrderRestrictions();
   const{data:items}=await db.from('menu_items').select('*').eq('is_active',true);
   menuItems=items||[];quantities={};
   menuItems.forEach(i=>quantities[i.id]=0);
   document.getElementById('menu-items-qty').innerHTML=menuItems.length===0
-    ?'<p style="color:#aaa;font-size:12px;padding:10px 0">No menu items found.</p>'
+    ?'<p style="color:#aaa;font-size:12px;padding:10px 0">No items found.</p>'
     :menuItems.map(item=>`
       <div class="qty-row">
-        <div><div class="qty-name">${item.name}</div>${item.description?`<div class="qty-desc">${item.description}</div>`:''}</div>
+        <div>
+          <div class="qty-name">${item.name}</div>
+          ${item.description?`<div class="qty-desc">${item.description}</div>`:''}
+          <div style="font-size:10px;color:#aaa;margin-top:2px">${item.unit_type||'unit'} · ${item.servings_per_unit||1} serving${(item.servings_per_unit||1)>1?'s':''} · ${item.shelf_life_days||4} day shelf life</div>
+        </div>
         <div class="qty-controls">
           <button class="qty-btn" onclick="changeQty('${item.id}',-1)">−</button>
           <span class="qty-num" id="qty-${item.id}">0</span>
@@ -1102,36 +1624,81 @@ async function loadNewOrderForm(){
         </div>
       </div>`).join('');
 }
+
+async function checkOrderRestrictions(){
+  const{data:clients}=await db.from('clients').select('id').limit(1);
+  const clientId=clients?.[0]?.id;if(!clientId)return;
+  const today=new Date().toISOString().split('T')[0];
+  const{data:blockout}=await db.from('blockout_dates').select('*').eq('blocked_date',today);
+  const blockoutWarning=document.getElementById('order-blockout-warning');
+  const placeBtn=document.getElementById('place-order-btn');
+  if(blockout&&blockout.length>0){
+    blockoutWarning.style.display='block';
+    blockoutWarning.textContent=`Orders are blocked today: ${blockout[0].reason||'No orders accepted'}`;
+    placeBtn.disabled=true;return;
+  }else{blockoutWarning.style.display='none';}
+  const{data:settings}=await db.from('order_settings').select('*').limit(1);
+  if(settings&&settings.length>0){
+    const s=settings[0];
+    const now=new Date();
+    const[ch,cm]=s.cutoff_time.split(':').map(Number);
+    const cutoff=new Date();cutoff.setHours(ch,cm,0,0);
+    const cutoffWarning=document.getElementById('order-cutoff-warning');
+    if(now>cutoff){
+      if(s.cutoff_type==='hard'){
+        cutoffWarning.style.display='block';
+        cutoffWarning.textContent=`Orders are closed after ${s.cutoff_time}. Please order tomorrow.`;
+        placeBtn.disabled=true;
+      }else{
+        cutoffWarning.style.display='block';
+        cutoffWarning.textContent=`⚠ Order submitted after cut-off time (${s.cutoff_time}). This will be flagged as a LATE ORDER.`;
+        placeBtn.disabled=false;
+      }
+    }else{cutoffWarning.style.display='none';placeBtn.disabled=false;}
+  }
+}
+
 function changeQty(itemId,delta){
   quantities[itemId]=Math.max(0,(quantities[itemId]||0)+delta);
   document.getElementById(`qty-${itemId}`).textContent=quantities[itemId];
 }
+
 async function placeOrder(){
   if(!currentOutletId){alert('No outlet selected.');return;}
   const notes=document.getElementById('order-notes').value.trim();
   const selectedItems=menuItems.filter(i=>quantities[i.id]>0);
   if(selectedItems.length===0){alert('Please add at least one item.');return;}
   const{data:clients}=await db.from('clients').select('id').limit(1);
+  const now=new Date();
+  const{data:settings}=await db.from('order_settings').select('*').limit(1);
+  let isLate=false;
+  if(settings&&settings.length>0){
+    const s=settings[0];
+    const[ch,cm]=s.cutoff_time.split(':').map(Number);
+    const cutoff=new Date();cutoff.setHours(ch,cm,0,0);
+    if(now>cutoff&&s.cutoff_type==='soft')isLate=true;
+  }
   const{data:order,error}=await db.from('orders').insert({
     outlet_id:currentOutletId,client_id:clients?.[0]?.id,status:'not_ready',
-    notes:notes||null,manufacturing_date:new Date().toISOString().split('T')[0]
+    notes:(isLate?'[LATE ORDER] ':'')+( notes||''),
+    manufacturing_date:now.toISOString().split('T')[0]
   }).select().single();
   if(error){alert('Error: '+error.message);return;}
   const{data:orderItems}=await db.from('order_items').insert(
     selectedItems.map(i=>({order_id:order.id,menu_item_id:i.id,quantity:quantities[i.id]}))
   ).select();
   const cakeUnits=[];
-  const dateStr=new Date().toISOString().slice(0,10).replace(/-/g,'');
+  const dateStr=now.toISOString().slice(0,10).replace(/-/g,'');
   for(const oi of orderItems){
     const mi=menuItems.find(m=>m.id===oi.menu_item_id);
-    const prefix=mi?mi.name.replace(/\s+/g,'').substring(0,3).toUpperCase():'CKE';
+    const prefix=mi?mi.name.replace(/\s+/g,'').substring(0,3).toUpperCase():'ITM';
     for(let n=1;n<=oi.quantity;n++){
       cakeUnits.push({order_id:order.id,order_item_id:oi.id,menu_item_id:oi.menu_item_id,
         serial_number:`${prefix}-${dateStr}-${order.id.substring(0,6).toUpperCase()}-${String(n).padStart(2,'0')}`});
     }
   }
   await db.from('cake_units').insert(cakeUnits);
-  alert(`Order placed! ${cakeUnits.length} QR sticker${cakeUnits.length>1?'s':''} ready in Kitchen.`);
+  alert(`Order placed!${isLate?' (Flagged as late order)':''} ${cakeUnits.length} QR sticker${cakeUnits.length>1?'s':''} ready in kitchen.`);
   menuItems.forEach(i=>{quantities[i.id]=0;document.getElementById(`qty-${i.id}`).textContent='0';});
   document.getElementById('order-notes').value='';
   handleNav('outlet-orders',0,document.querySelectorAll('#main-nav button')[0]);
@@ -1147,18 +1714,16 @@ async function loadOutletOrders(){
   document.getElementById('o-rd').textContent=data.filter(o=>o.status==='ready').length;
   document.getElementById('o-tr').textContent=data.filter(o=>o.status==='in_transit').length;
   document.getElementById('o-dl').textContent=data.filter(o=>o.status==='delivered').length;
-  renderOrderListOutlet('outlet-order-list',data);
-}
-function renderOrderListOutlet(containerId,data){
-  const list=document.getElementById(containerId);
+  const list=document.getElementById('outlet-order-list');
   if(!data||data.length===0){list.innerHTML='<div class="empty">No orders yet</div>';return;}
   const sMap={not_ready:'nr',ready:'rd',in_transit:'tr',delivered:'dl'};
   list.innerHTML=data.map(order=>{
     const sc=sMap[order.status]||'nr';
+    const isLate=order.notes?.includes('[LATE ORDER]');
     return`<div class="order-card ${sc}" onclick="openOrderDetail('${order.id}')">
       <div class="order-card-head">
         <div>
-          <div class="order-title">${order.outlets?.name||'Your Outlet'}</div>
+          <div class="order-title">${order.outlets?.name||'Your Outlet'} ${isLate?'<span style="background:var(--nr-bg);color:var(--nr-text);font-size:9px;padding:2px 6px;border-radius:10px;font-weight:600">LATE</span>':''}</div>
           <div class="order-meta">${(order.order_items||[]).map(i=>`${i.menu_items?.name} × ${i.quantity}`).join(', ')}</div>
           <div class="order-sub">${formatDate(order.ordered_at)}</div>
         </div>
@@ -1173,20 +1738,22 @@ async function loadOrderFromCakeUnit(unitId){
   const{data:unit,error}=await db.from('cake_units')
     .select('*, orders(*, outlets(name), order_items(*, menu_items(name))), menu_items(name)')
     .eq('id',unitId).single();
-  if(error||!unit){showAlert('receive-alert','Cake not found. Please scan the correct QR.','error');return;}
+  if(error||!unit){showAlert('receive-alert','Item not found. Please scan the correct QR.','error');return;}
   currentReceiveOrderId=unit.orders?.id;currentReceiveCakeUnitId=unitId;
   document.getElementById('receive-order-info').innerHTML=
-    `<strong>${unit.menu_items?.name||'Cake'}</strong> — ${unit.serial_number}<br>
+    `<strong>${unit.menu_items?.name||'Item'}</strong> — ${unit.serial_number}<br>
      Outlet: ${unit.orders?.outlets?.name||'—'} · Status: ${formatStatus(unit.status)}`;
   document.getElementById('receiver-name').value=currentStaffName||'';
   document.getElementById('receive-confirm').style.display='block';
   showAlert('receive-alert','QR scanned! Confirm receipt below.','success');
 }
+
 function previewPhoto(inputId,previewId){
   const file=document.getElementById(inputId).files[0];if(!file)return;
   const preview=document.getElementById(previewId);
   preview.src=URL.createObjectURL(file);preview.style.display='block';
 }
+
 async function submitReceived(){
   if(!currentReceiveOrderId)return;
   const name=document.getElementById('receiver-name').value.trim();
@@ -1231,11 +1798,13 @@ async function loadKitchenOrders(){
   renderKitchenOrders(pending);
   if(kitchenView==='kanban')renderKitchenKanban(allKitchenFull);
 }
+
 function filterKitchen(status,btn){
   document.querySelectorAll('#kitchen-incoming .filter-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   renderKitchenOrders(status==='all'?allKitchenOrders:allKitchenOrders.filter(o=>o.status===status));
 }
+
 function renderKitchenOrders(data){
   const list=document.getElementById('kitchen-order-list');
   if(!data||data.length===0){list.innerHTML='<div class="empty">No pending orders</div>';return;}
@@ -1245,41 +1814,41 @@ function renderKitchenOrders(data){
     const ready=allUnits.filter(u=>u.status!=='not_ready').length;
     const pct=total>0?Math.round((ready/total)*100):0;
     const sc={not_ready:'nr',ready:'rd'}[order.status]||'nr';
+    const isLate=order.notes?.includes('[LATE ORDER]');
     return`<div class="order-card ${sc}" onclick="openOrderDetail('${order.id}')">
       <div class="order-card-head">
         <div>
-          <div class="order-title">${order.outlets?.name||'Unknown'}</div>
+          <div class="order-title">${order.outlets?.name||'Unknown'} ${isLate?'<span style="background:var(--nr-bg);color:var(--nr-text);font-size:9px;padding:2px 6px;border-radius:10px;font-weight:600">LATE ORDER</span>':''}</div>
           <div class="order-meta">${(order.order_items||[]).map(i=>`${i.menu_items?.name} × ${i.quantity}`).join(', ')}</div>
           <div class="order-sub">${formatDate(order.ordered_at)}</div>
         </div>
         <span class="badge badge-${sc}">${formatStatus(order.status)}</span>
       </div>
       <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:var(--${sc}-bar)"></div></div>
-      <div class="progress-label"><span>${ready}/${total} cakes scanned</span><span style="font-weight:600;color:var(--${sc}-bar)">${pct}%</span></div>
+      <div class="progress-label"><span>${ready}/${total} items scanned</span><span style="font-weight:600;color:var(--${sc}-bar)">${pct}%</span></div>
       <div style="margin-top:8px">
         ${allUnits.map(unit=>`
           <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-top:1px solid #f8f5f0">
             <div style="width:16px;height:16px;border-radius:50%;border:2px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;flex-shrink:0;${unit.status!=='not_ready'?'background:var(--dl-bar);border-color:var(--dl-bar);color:white':''}">${unit.status!=='not_ready'?'✓':''}</div>
             <span style="font-size:10px;font-family:monospace;flex:1">${unit.serial_number}</span>
             ${unit.scanned_by_kitchen?`<span style="font-size:9px;color:#aaa">by ${unit.scanned_by_kitchen}</span>`:''}
-            <button class="btn btn-sm btn-primary" onclick="event.stopPropagation();showCakeQR('${unit.id}','${unit.serial_number}','${(order.order_items||[]).find(i=>i.id===unit.order_item_id)?.menu_items?.name||'Cake'}','${order.outlets?.name||''}','${order.ordered_at}','${order.picked_up_at||''}',${(order.order_items||[]).find(i=>i.id===unit.order_item_id)?.menu_items?.shelf_life_days||4})" style="font-size:9px;padding:4px 8px">QR</button>
+            <button class="btn btn-sm btn-primary" onclick="event.stopPropagation();showCakeQR('${unit.id}','${unit.serial_number}','${(order.order_items||[]).find(i=>i.id===unit.order_item_id)?.menu_items?.name||'Item'}','${order.outlets?.name||''}','${order.ordered_at}','${order.picked_up_at||''}',${(order.order_items||[]).find(i=>i.id===unit.order_item_id)?.menu_items?.shelf_life_days||4})" style="font-size:9px;padding:4px 8px">QR</button>
           </div>`).join('')}
       </div>
-      ${order.status==='ready'?`<div class="alert alert-success" style="margin-top:10px;font-size:11px">All cakes ready — awaiting driver pickup</div>`:''}
+      ${order.status==='ready'?`<div class="alert alert-success" style="margin-top:10px;font-size:11px">All items ready — awaiting driver pickup</div>`:''}
     </div>`;
   }).join('');
 }
+
 async function markCakeReady(unitId){
   const{data:unit,error}=await db.from('cake_units').select('*, orders(id,status), menu_items(name)').eq('id',unitId).single();
-  if(error||!unit){showAlert('kitchen-scan-alert','Cake not found.','error');return;}
+  if(error||!unit){showAlert('kitchen-scan-alert','Item not found.','error');return;}
   if(unit.status!=='not_ready'){showAlert('kitchen-scan-alert',`${unit.serial_number} already scanned.`,'warning');return;}
   await db.from('cake_units').update({status:'ready',scanned_ready_at:new Date().toISOString(),scanned_by_kitchen:currentStaffName||'Kitchen'}).eq('id',unitId);
   const{data:allUnits}=await db.from('cake_units').select('*').eq('order_id',unit.orders.id);
   const allReady=allUnits.every(u=>u.id===unitId?true:u.status!=='not_ready');
   if(allReady){
     await db.from('orders').update({status:'ready',ready_at:new Date().toISOString()}).eq('id',unit.orders.id);
-    const{data:oi}=await db.from('order_items').select('*').eq('order_id',unit.orders.id);
-    for(const item of oi){const count=allUnits.filter(u=>u.order_item_id===item.id).length;await db.from('order_items').update({scanned_count:count,is_ready:true}).eq('id',item.id);}
     showAlert('kitchen-scan-alert',`All scanned by ${currentStaffName}! Order READY TO PICK UP.`,'success');
   }else{
     const rem=allUnits.filter(u=>u.id!==unitId&&u.status==='not_ready').length;
@@ -1313,14 +1882,15 @@ async function loadDriverOrders(){
       </div>
       <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:var(--tr-bar)"></div></div>
       <div class="progress-label"><span>${loaded}/${total} loaded</span><span style="font-weight:600;color:var(--tr-bar)">${pct}%</span></div>
-      ${order.status==='ready'?`<button class="btn btn-mustard" style="margin-top:10px" onclick="event.stopPropagation();handleNav('driver-scan',1,document.querySelectorAll('#main-nav button')[1])">Scan Cakes to Load</button>`
+      ${order.status==='ready'?`<button class="btn btn-mustard" style="margin-top:10px" onclick="event.stopPropagation();handleNav('driver-scan',1,document.querySelectorAll('#main-nav button')[1])">Scan Items to Load</button>`
       :`<div class="alert alert-info" style="margin-top:10px;font-size:12px">In transit — ${loaded}/${total} loaded</div>`}
     </div>`;
   }).join('');
 }
+
 async function driverScanCake(unitId){
   const{data:unit,error}=await db.from('cake_units').select('*, orders(id,status,outlets(name)), menu_items(name)').eq('id',unitId).single();
-  if(error||!unit){showAlert('driver-scan-alert','Cake not found.','error');return;}
+  if(error||!unit){showAlert('driver-scan-alert','Item not found.','error');return;}
   if(unit.status==='not_ready'){showAlert('driver-scan-alert','Not ready by kitchen yet.','error');return;}
   if(unit.scanned_by_driver){showAlert('driver-scan-alert',`${unit.serial_number} already loaded.`,'warning');return;}
   const now=new Date().toISOString();
@@ -1339,210 +1909,29 @@ async function driverScanCake(unitId){
   }
 }
 
-// ── ORDER DETAIL ──
-async function openOrderDetail(orderId){
-  previousPage=document.querySelector('.page.active')?.id;
-  showPage('order-detail');
-  document.getElementById('order-detail-content').innerHTML='<div class="loader">Loading...</div>';
-  const{data:order,error}=await db.from('orders')
-    .select('*, outlets(name), order_items(*, menu_items(name,shelf_life_days)), cake_units(*)')
-    .eq('id',orderId).single();
-  if(error||!order){document.getElementById('order-detail-content').innerHTML='<div class="alert alert-error">Failed to load.</div>';return;}
-  // Load scans separately to avoid join issues
-  const{data:scansData}=await db.from('scans').select('*').eq('batch_id',orderId);
-  order.scans=scansData||[];
-  const dispatchScan=order.scans.find(s=>s.scan_type==='dispatch');
-  const receiveScan=order.scans.find(s=>s.scan_type==='received');
-  const shelfLife=order.order_items?.[0]?.menu_items?.shelf_life_days||4;
-  let bbLabel='',bbClass='';
-  if(order.picked_up_at){
-    const bb=new Date(order.picked_up_at);bb.setDate(bb.getDate()+shelfLife);
-    const dl=Math.ceil((bb-new Date())/(1000*60*60*24));
-    bbLabel=dl>1?`Best before ${formatDateOnly(bb)} (${dl} days)`:dl===1?'Expires tomorrow!':dl===0?'Use today!':'EXPIRED '+Math.abs(dl)+'d ago';
-    bbClass=dl>1?'bb-ok':dl>=0?'bb-warn':'bb-expired';
-  }
-  const daysSince=order.delivered_at?Math.floor((new Date()-new Date(order.delivered_at))/(1000*60*60*24)):null;
-  const steps=[
-    {label:'Order Placed',time:order.ordered_at,by:null,done:true},
-    {label:'Kitchen Ready',time:order.ready_at,by:null,done:!!order.ready_at},
-    {label:'Loaded by Driver',time:order.picked_up_at,by:dispatchScan?.scanned_by,done:!!order.picked_up_at},
-    {label:'Delivered',time:order.delivered_at,by:receiveScan?.scanned_by,done:!!order.delivered_at},
-  ];
-  const sc={not_ready:'nr',ready:'rd',in_transit:'tr',delivered:'dl'}[order.status]||'nr';
-  const showProgress=currentRole==='kitchen'||currentRole==='admin'||currentRole==='driver';
-  const allUnits=order.cake_units||[];
-  const total=allUnits.length;
-  const ready=allUnits.filter(u=>u.status!=='not_ready').length;
-  const pct=total>0?Math.round((ready/total)*100):0;
-
-  document.getElementById('order-detail-content').innerHTML=`
-    <div class="detail-header">
-      <div class="detail-title">${order.outlets?.name||'Unknown'}</div>
-      <div class="detail-sub">${(order.order_items||[]).map(i=>`${i.menu_items?.name} × ${i.quantity}`).join(', ')}</div>
-      <div class="detail-badges">
-        <span class="badge badge-${sc}">${formatStatus(order.status)}</span>
-        ${bbLabel?`<span class="${bbClass}">${bbLabel}</span>`:''}
-        ${daysSince!==null?`<span style="font-size:11px;color:#aaa">${daysSince===0?'Delivered today':`${daysSince}d since delivery`}</span>`:''}
-      </div>
-    </div>
-
-    ${showProgress&&total>0?`
-    <div style="background:var(--white);border-radius:6px;padding:14px 16px;margin-bottom:16px;border-top:3px solid var(--mustard)">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <div style="font-size:11px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;color:#888">Preparation Progress</div>
-        <div style="font-size:14px;font-weight:700;color:var(--${sc}-bar)">${pct}%</div>
-      </div>
-      <div class="progress-bar" style="height:8px"><div class="progress-fill" style="width:${pct}%;background:var(--${sc}-bar)"></div></div>
-      <div style="font-size:10px;color:#aaa;margin-top:6px;margin-bottom:12px">${ready} of ${total} cakes scanned ready</div>
-      ${allUnits.map(u=>{
-        const oi=order.order_items?.find(i=>i.id===u.order_item_id);
-        const sc2={not_ready:'nr',ready:'rd',in_transit:'tr',delivered:'dl'}[u.status]||'nr';
-        return`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f8f5f0">
-          <div style="width:18px;height:18px;border-radius:50%;border:2px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0;${u.status!=='not_ready'?'background:var(--dl-bar);border-color:var(--dl-bar);color:white':''}">${u.status!=='not_ready'?'✓':''}</div>
-          <div style="flex:1">
-            <div style="font-family:monospace;font-size:11px">${u.serial_number}</div>
-            <div style="font-size:10px;color:#aaa">${oi?.menu_items?.name||'Cake'}${u.scanned_by_kitchen?` · by ${u.scanned_by_kitchen}`:''}</div>
-          </div>
-          <span class="badge badge-${sc2}" style="font-size:9px;padding:2px 6px">${formatStatus(u.status)}</span>
-          <button class="btn btn-sm btn-primary" onclick="showCakeQR('${u.id}','${u.serial_number}','${oi?.menu_items?.name||'Cake'}','${order.outlets?.name||''}','${order.ordered_at}','${order.picked_up_at||''}',${oi?.menu_items?.shelf_life_days||4})" style="font-size:9px;padding:4px 8px">QR</button>
-        </div>`;
-      }).join('')}
-    </div>`:''}
-
-    ${!showProgress&&total>0?`
-    <div style="background:var(--white);border-radius:6px;padding:14px 16px;margin-bottom:16px;border-top:3px solid var(--mustard)">
-      <div class="timeline-title">Cake Units</div>
-      ${allUnits.map(u=>{
-        const oi=order.order_items?.find(i=>i.id===u.order_item_id);
-        const sc2={not_ready:'nr',ready:'rd',in_transit:'tr',delivered:'dl'}[u.status]||'nr';
-        return`<div class="unit-row">
-          <div>
-            <div class="unit-serial">${u.serial_number}</div>
-            <div style="font-size:10px;color:#aaa;margin-top:2px">${oi?.menu_items?.name||'Cake'} · <span class="badge badge-${sc2}" style="font-size:9px;padding:2px 6px">${formatStatus(u.status)}</span></div>
-          </div>
-          <button class="btn btn-sm btn-primary" onclick="showCakeQR('${u.id}','${u.serial_number}','${oi?.menu_items?.name||'Cake'}','${order.outlets?.name||''}','${order.ordered_at}','${order.picked_up_at||''}',${oi?.menu_items?.shelf_life_days||4})" style="font-size:9px;padding:4px 8px">QR</button>
-        </div>`;
-      }).join('')}
-    </div>`:''}
-
-    <div class="info-grid">
-      <div class="info-item"><div class="info-label">Outlet</div><div class="info-value">${order.outlets?.name||'—'}</div></div>
-      <div class="info-item"><div class="info-label">Ordered</div><div class="info-value">${formatDate(order.ordered_at)}</div></div>
-      <div class="info-item"><div class="info-label">Driver</div><div class="info-value">${dispatchScan?.scanned_by||'—'}</div></div>
-      <div class="info-item"><div class="info-label">Received By</div><div class="info-value">${receiveScan?.scanned_by||'—'}</div></div>
-      ${order.picked_up_at?`<div class="info-item"><div class="info-label">Dispatched</div><div class="info-value">${formatDate(order.picked_up_at)}</div></div>`:''}
-      ${order.delivered_at?`<div class="info-item"><div class="info-label">Delivered</div><div class="info-value">${formatDate(order.delivered_at)}</div></div>`:''}
-      ${bbLabel?`<div class="info-item"><div class="info-label">Best Before</div><div class="info-value ${bbClass}">${bbLabel}</div></div>`:''}
-    </div>
-
-    <div class="timeline-wrap">
-      <div class="timeline-title">Delivery Timeline</div>
-      ${steps.map((step,i)=>{
-        const isActive=!step.done&&(i===0||steps[i-1]?.done);
-        return`<div class="tl-step">
-          <div class="tl-dot ${step.done?'done':isActive?'active':'pending'}">${step.done?'✓':i+1}</div>
-          <div class="tl-content">
-            <div class="tl-label">${step.label}</div>
-            ${step.time?`<div class="tl-time">${formatDate(step.time)}</div>`:'<div class="tl-time" style="color:#ddd">Pending</div>'}
-            ${step.by?`<div class="tl-by">by ${step.by}</div>`:''}
-            ${step.label==='Delivered'&&receiveScan?.photo_url?`<img src="${receiveScan.photo_url}" class="tl-photo" onclick="window.open('${receiveScan.photo_url}','_blank')"/>`:''}
-          </div>
-        </div>`;
-      }).join('')}
-    </div>
-
-    ${currentRole==='admin'?`
-      <div class="card" style="border-top-color:var(--nr-bar)">
-        <h2>Admin Override</h2>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
-          ${['not_ready','ready','in_transit','delivered'].map(s=>
-            `<button class="btn btn-sm ${order.status===s?'btn-mustard':'btn-primary'}" onclick="adminOverride('${order.id}','${s}')">${formatStatus(s)}</button>`
-          ).join('')}
-        </div>
-      </div>`:''}`;
-}
-
-// ── QR MODAL ──
-function showCakeQR(unitId,serial,cakeName,outletName,orderedAt,pickedUpAt,shelfLife){
-  const url=`${window.location.origin}${window.location.pathname}?track=${unitId}`;
-  const mfgDate=formatDateOnly(orderedAt);
-  let bbLabel='Pending dispatch';
-  if(pickedUpAt&&pickedUpAt!==''){
-    const bb=new Date(pickedUpAt);bb.setDate(bb.getDate()+(parseInt(shelfLife)||4));
-    bbLabel=formatDateOnly(bb.toISOString());
-  }
-  const existing=document.getElementById('qr-modal');if(existing)existing.remove();
-  const modal=document.createElement('div');
-  modal.id='qr-modal';modal.className='qr-modal';
-  modal.onclick=e=>{if(e.target===modal)modal.remove();};
-  modal.innerHTML=`
-    <div class="qr-modal-box">
-      <div class="qr-modal-hdr"><div class="qr-modal-title">DOJO <span style="color:var(--mustard)">INTERFACE</span> — CAKE QR STICKER</div></div>
-      <div class="qr-sticker">
-        <div class="qr-sticker-logo">DOJO <span>INTERFACE</span> — CHAIN OF CUSTODY</div>
-        <div class="qr-field"><span class="qr-field-label">ITEM</span><span class="qr-field-value">${cakeName}</span></div>
-        <div class="qr-field"><span class="qr-field-label">SERIAL</span><span class="qr-field-value">${serial}</span></div>
-        <div class="qr-field"><span class="qr-field-label">OUTLET</span><span class="qr-field-value">${outletName}</span></div>
-        <div class="qr-field"><span class="qr-field-label">MFG DATE</span><span class="qr-field-value">${mfgDate}</span></div>
-        <div class="qr-field"><span class="qr-field-label">BEST BEFORE</span><span class="qr-field-value">${bbLabel}</span></div>
-        <div class="qr-code-wrap" id="qr-render-here"></div>
-        <div style="font-size:9px;color:#aaa;text-align:center;letter-spacing:0.5px">SCAN TO VIEW FULL DELIVERY HISTORY</div>
-      </div>
-      <div class="qr-modal-actions">
-        <button class="btn btn-primary btn-sm" id="download-qr-btn">Download PNG</button>
-        <button class="btn btn-sm" style="background:var(--canvas);border:1px solid #ddd" onclick="document.getElementById('qr-modal').remove()">Close</button>
-      </div>
-    </div>`;
-  document.body.appendChild(modal);
-  const qrDiv=document.getElementById('qr-render-here');
-  new QRCode(qrDiv,{text:url,width:160,height:160,colorDark:'#2C2A25',colorLight:'#ffffff'});
-  document.getElementById('download-qr-btn').onclick=()=>{
-    setTimeout(()=>{
-      const qrCanvas=qrDiv.querySelector('canvas');
-      if(!qrCanvas){alert('QR not ready, try again.');return;}
-      const dl=document.createElement('canvas');dl.width=400;dl.height=520;
-      const ctx=dl.getContext('2d');
-      ctx.fillStyle='#ffffff';ctx.fillRect(0,0,400,520);
-      ctx.fillStyle='#2C2A25';ctx.fillRect(0,0,400,44);
-      ctx.fillStyle='#EF9F27';ctx.fillRect(0,41,400,3);
-      ctx.fillStyle='#F5F0E8';ctx.font='bold 11px monospace';ctx.textAlign='center';
-      ctx.fillText('DOJO INTERFACE — CHAIN OF CUSTODY',200,27);
-      const fields=[['ITEM',cakeName],['SERIAL',serial],['OUTLET',outletName],['MFG DATE',mfgDate],['BEST BEFORE',bbLabel]];
-      let y=66;
-      fields.forEach(([label,value])=>{
-        ctx.fillStyle='#888';ctx.font='10px sans-serif';ctx.textAlign='left';ctx.fillText(label,24,y);
-        ctx.fillStyle='#2C2A25';ctx.font='bold 11px monospace';ctx.textAlign='right';ctx.fillText(value,376,y);
-        y+=24;ctx.fillStyle='#f0ede6';ctx.fillRect(24,y-12,352,1);
-      });
-      ctx.drawImage(qrCanvas,120,y+8,160,160);
-      ctx.fillStyle='#aaa';ctx.font='9px monospace';ctx.textAlign='center';
-      ctx.fillText('SCAN TO VIEW FULL DELIVERY HISTORY',200,y+182);
-      const link=document.createElement('a');
-      link.download=`QR-${serial}.png`;link.href=dl.toDataURL('image/png');link.click();
-    },500);
-  };
-}
-
-// ── ADMIN ORDERS ──
-async function loadAdminOrders(){
+// ── HQ ORDERS ──
+async function loadHQOrders(){
   const{data,error}=await db.from('orders')
     .select('*, outlets(name), order_items(*, menu_items(name,shelf_life_days)), cake_units(*)')
     .order('ordered_at',{ascending:false});
-  if(error){document.getElementById('admin-order-list').innerHTML='<div class="alert alert-error">Failed to load: '+error.message+'</div>';return;}
-  allAdminOrders=data;
+  if(error){document.getElementById('hq-order-list').innerHTML='<div class="alert alert-error">Failed to load: '+error.message+'</div>';return;}
+  allHQOrders=data;
   document.getElementById('a-nr').textContent=data.filter(o=>o.status==='not_ready').length;
   document.getElementById('a-rd').textContent=data.filter(o=>o.status==='ready').length;
   document.getElementById('a-tr').textContent=data.filter(o=>o.status==='in_transit').length;
   document.getElementById('a-dl').textContent=data.filter(o=>o.status==='delivered').length;
-  renderOrderList('admin-order-list',data);
-  if(adminView==='kanban')renderAdminKanban(data);
+  renderOrderList('hq-order-list',data);
+  if(hqView==='kanban')renderHQKanban(data);
+  renderLiveBoard(data);
   updateDragBanner();
 }
-function filterAdmin(status,btn){
-  document.querySelectorAll('#admin-dashboard .filter-btn').forEach(b=>b.classList.remove('active'));
+
+function filterHQ(status,btn){
+  document.querySelectorAll('#hq-orders .filter-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  renderOrderList('admin-order-list',status==='all'?allAdminOrders:allAdminOrders.filter(o=>o.status===status));
+  renderOrderList('hq-order-list',status==='all'?allHQOrders:allHQOrders.filter(o=>o.status===status));
 }
+
 async function adminOverride(orderId,newStatus){
   const name=prompt(`Override to "${formatStatus(newStatus)}"? Enter your name:`);if(!name)return;
   const update={status:newStatus,override_by:name,override_at:new Date().toISOString()};
@@ -1552,6 +1941,71 @@ async function adminOverride(orderId,newStatus){
   await db.from('orders').update(update).eq('id',orderId);
   await db.from('cake_units').update({status:newStatus}).eq('order_id',orderId);
   openOrderDetail(orderId);
+}
+
+async function deleteOrder(orderId){
+  if(!confirm('Permanently delete this order? This cannot be undone.'))return;
+  await db.from('cake_units').delete().eq('order_id',orderId);
+  await db.from('order_items').delete().eq('order_id',orderId);
+  await db.from('scans').delete().eq('batch_id',orderId);
+  await db.from('orders').delete().eq('id',orderId);
+  goBack();
+  loadHQOrders();
+}
+
+// ── INVENTORY ──
+async function loadInventory(){
+  const container=document.getElementById('inventory-content');
+  container.innerHTML='<div class="loader">Loading inventory...</div>';
+  const{data:items}=await db.from('menu_items').select('*').eq('is_active',true);
+  const{data:units}=await db.from('cake_units').select('*, menu_items(name,cost_per_unit,selling_price,unit_type,servings_per_unit), orders(status,outlets(name))');
+  if(!items||items.length===0){container.innerHTML='<div class="empty">No menu items found</div>';return;}
+  let totalCost=0,totalRev=0,totalUnits=0;
+  const rows=items.map(item=>{
+    const itemUnits=(units||[]).filter(u=>u.menu_item_id===item.id);
+    const delivered=itemUnits.filter(u=>u.orders?.status==='delivered').length;
+    const inTransit=itemUnits.filter(u=>u.orders?.status==='in_transit').length;
+    const ready=itemUnits.filter(u=>u.orders?.status==='ready').length;
+    const cost=(item.cost_per_unit||0)*delivered;
+    const rev=(item.selling_price||0)*delivered;
+    const margin=rev-cost;
+    totalCost+=cost;totalRev+=rev;totalUnits+=delivered;
+    return{item,delivered,inTransit,ready,cost,rev,margin};
+  });
+  totalCost=Math.round(totalCost*100)/100;
+  totalRev=Math.round(totalRev*100)/100;
+  const totalMargin=Math.round((totalRev-totalCost)*100)/100;
+  document.getElementById('inv-units').textContent=totalUnits;
+  document.getElementById('inv-cost').textContent=totalCost.toFixed(2);
+  document.getElementById('inv-rev').textContent=totalRev.toFixed(2);
+  document.getElementById('inv-margin').textContent=totalMargin.toFixed(2);
+  container.innerHTML=`
+    <div style="overflow-x:auto">
+      <table class="inventory-table">
+        <thead>
+          <tr>
+            <th>Item</th><th>Unit Type</th><th>Delivered</th><th>In Transit</th><th>Ready</th>
+            <th>Cost/Unit (RM)</th><th>Sell/Unit (RM)</th><th>Total Cost (RM)</th><th>Est. Revenue (RM)</th><th>Margin (RM)</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(r=>`
+            <tr>
+              <td style="font-weight:600">${r.item.name}</td>
+              <td>${r.item.unit_type||'unit'}</td>
+              <td>${r.delivered}</td>
+              <td>${r.inTransit}</td>
+              <td>${r.ready}</td>
+              <td><span class="cost-badge">RM ${(r.item.cost_per_unit||0).toFixed(2)}</span></td>
+              <td>RM ${(r.item.selling_price||0).toFixed(2)}</td>
+              <td>RM ${r.cost.toFixed(2)}</td>
+              <td>RM ${r.rev.toFixed(2)}</td>
+              <td class="${r.margin>=0?'margin-good':'margin-warn'}">RM ${r.margin.toFixed(2)}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div style="font-size:10px;color:#aaa;margin-top:8px;padding:8px 0">* Cost and revenue data only visible to Headquarters. Based on items marked as delivered.</div>`;
 }
 
 // ── ANALYTICS ──
@@ -1591,7 +2045,7 @@ async function loadAnalytics(filters={}){
       <div style="background:var(--white);padding:14px 8px;text-align:center;border-radius:4px;border-top:3px solid var(--dl-bar)"><div style="font-size:22px;font-weight:700;color:var(--dl-bar)">${fastest}</div><div style="font-size:9px;color:#888;margin-top:3px">FASTEST</div></div>
       <div style="background:var(--white);padding:14px 8px;text-align:center;border-radius:4px;border-top:3px solid var(--nr-bar)"><div style="font-size:22px;font-weight:700;color:var(--nr-bar)">${slowest}</div><div style="font-size:9px;color:#888;margin-top:3px">SLOWEST</div></div>
     </div>
-    <div style="font-size:10px;color:#aaa;letter-spacing:0.5px;margin-bottom:12px">${times.length} DELIVERIES · AVG ${avg} MIN</div>
+    <div style="font-size:10px;color:#aaa;margin-bottom:12px">${times.length} DELIVERIES · AVG ${avg} MIN</div>
     ${times.map(o=>{
       const pct=Math.round((o.mins/maxMins)*100);
       const isFast=o.mins<avg;const isSlow=o.mins>avg*1.5;
@@ -1613,6 +2067,7 @@ async function loadAnalytics(filters={}){
       </div>`;
     }).join('')}`;
 }
+
 function applyAnalyticsFilters(){
   loadAnalytics({
     from:document.getElementById('filter-from').value||null,
@@ -1623,8 +2078,48 @@ function applyAnalyticsFilters(){
   });
 }
 
-// ── ADMIN MANAGER ──
-async function loadManager(){await loadAdminOutlets();await loadAdminMenu();}
+// ── REPORTS ──
+async function downloadReport(type,format){
+  const{data:orders}=await db.from('orders')
+    .select('*, outlets(name), order_items(*, menu_items(name,cost_per_unit,selling_price)), scans(*), cake_units(*)')
+    .order('ordered_at',{ascending:false});
+  if(!orders||orders.length===0){alert('No data to export.');return;}
+  if(format==='csv'){
+    let csv='';
+    if(type==='delivery'){
+      csv='Order ID,Outlet,Items,Status,Ordered,Dispatched,Delivered,Driver,Received By\n';
+      orders.forEach(o=>{
+        const dispatch=o.scans?.find(s=>s.scan_type==='dispatch');
+        const receive=o.scans?.find(s=>s.scan_type==='received');
+        csv+=`${o.id},${o.outlets?.name||''},${(o.order_items||[]).map(i=>i.menu_items?.name+' x'+i.quantity).join('; ')},${o.status},${o.ordered_at||''},${o.picked_up_at||''},${o.delivered_at||''},${dispatch?.scanned_by||''},${receive?.scanned_by||''}\n`;
+      });
+    }else if(type==='outlet-summary'){
+      csv='Outlet,Total Orders,Delivered,In Transit,Not Ready,Ready\n';
+      const outlets={};
+      orders.forEach(o=>{
+        const name=o.outlets?.name||'Unknown';
+        if(!outlets[name])outlets[name]={total:0,delivered:0,in_transit:0,not_ready:0,ready:0};
+        outlets[name].total++;outlets[name][o.status]++;
+      });
+      Object.entries(outlets).forEach(([name,stats])=>{
+        csv+=`${name},${stats.total},${stats.delivered},${stats.in_transit},${stats.not_ready},${stats.ready}\n`;
+      });
+    }else if(type==='messages'){
+      const{data:msgs}=await db.from('messages').select('*,outlets(name)').order('created_at',{ascending:true});
+      csv='Outlet,Sent By,Role,Message,Timestamp\n';
+      (msgs||[]).forEach(m=>{csv+=`${m.outlets?.name||''},${m.sent_by},${m.sent_by_role},"${m.message}",${m.created_at}\n`;});
+    }else{csv='No data';}
+    const blob=new Blob([csv],{type:'text/csv'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=`DOJO-${type}-${new Date().toISOString().split('T')[0]}.csv`;a.click();
+  }else{
+    alert('PDF export coming soon. Use Excel for now.');
+  }
+}
+
+// ── MANAGER ──
+async function loadManager(){await loadAdminOutlets();await loadAdminMenu();await loadOrderSettings();await loadBlockoutDates();}
+
 async function loadAdminOutlets(){
   const{data}=await db.from('outlets').select('*').order('name');
   const list=document.getElementById('outlets-list');
@@ -1638,54 +2133,304 @@ async function loadAdminOutlets(){
       </div>
     </div>`).join('');
 }
+
 async function addOutlet(){
   const name=document.getElementById('new-outlet-name').value.trim();
   const pin=document.getElementById('new-outlet-pin').value.trim();
   if(!name){alert('Please enter a name.');return;}
   const{data:clients}=await db.from('clients').select('id').limit(1);
   await db.from('outlets').insert({name,client_id:clients?.[0]?.id,is_active:true,pin:pin||null});
-  document.getElementById('new-outlet-name').value='';
-  document.getElementById('new-outlet-pin').value='';
+  document.getElementById('new-outlet-name').value='';document.getElementById('new-outlet-pin').value='';
   loadAdminOutlets();
 }
+
 async function editOutlet(id,name,pin){
   const n=prompt('Outlet name:',name);if(!n)return;
   const p=prompt('Set PIN (leave blank to remove):',pin);
   await db.from('outlets').update({name:n,pin:p||null}).eq('id',id);loadAdminOutlets();
 }
+
 async function toggleOutlet(id,val){await db.from('outlets').update({is_active:val}).eq('id',id);loadAdminOutlets();}
+
 async function loadAdminMenu(){
   const{data}=await db.from('menu_items').select('*').order('name');
   const list=document.getElementById('menu-list');
-  if(!data||data.length===0){list.innerHTML='<div class="empty">No menu items yet</div>';return;}
+  if(!data||data.length===0){list.innerHTML='<div class="empty">No items yet</div>';return;}
   list.innerHTML=data.map(item=>`
     <div class="admin-item">
-      <div><div class="admin-item-name">${item.name}</div><div class="admin-item-sub">${item.description||''} · ${item.shelf_life_days||4}d shelf life · ${item.is_active?'Active':'Disabled'}</div></div>
+      <div>
+        <div class="admin-item-name">${item.name}</div>
+        <div class="admin-item-sub">${item.unit_type||'unit'} · ${item.shelf_life_days||4}d shelf life · Cost: RM${(item.cost_per_unit||0).toFixed(2)} · Sell: RM${(item.selling_price||0).toFixed(2)} · ${item.is_active?'Active':'Disabled'}</div>
+      </div>
       <div class="admin-actions">
-        <button class="btn btn-sm btn-primary" onclick="editMenuItem('${item.id}','${item.name}','${item.description||''}',${item.shelf_life_days||4})">Edit</button>
+        <button class="btn btn-sm btn-primary" onclick="editMenuItem('${item.id}','${item.name}','${item.description||''}',${item.shelf_life_days||4},${item.cost_per_unit||0},${item.selling_price||0},'${item.unit_type||'unit'}',${item.servings_per_unit||1})">Edit</button>
         <button class="btn btn-sm ${item.is_active?'btn-danger':'btn-success'}" onclick="toggleMenuItem('${item.id}',${!item.is_active})">${item.is_active?'Disable':'Enable'}</button>
       </div>
     </div>`).join('');
 }
+
 async function addMenuItem(){
   const name=document.getElementById('new-item-name').value.trim();
   const desc=document.getElementById('new-item-desc').value.trim();
   const shelf=parseInt(document.getElementById('new-item-shelf').value)||4;
+  const unitType=document.getElementById('new-item-unit').value;
+  const servings=parseInt(document.getElementById('new-item-servings').value)||1;
   if(!name){alert('Please enter a name.');return;}
   const{data:clients}=await db.from('clients').select('id').limit(1);
-  await db.from('menu_items').insert({name,description:desc||null,shelf_life_days:shelf,client_id:clients?.[0]?.id,is_active:true});
-  document.getElementById('new-item-name').value='';
-  document.getElementById('new-item-desc').value='';
+  await db.from('menu_items').insert({name,description:desc||null,shelf_life_days:shelf,unit_type:unitType,servings_per_unit:servings,client_id:clients?.[0]?.id,is_active:true});
+  ['new-item-name','new-item-desc'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('new-item-shelf').value='4';
+  document.getElementById('new-item-servings').value='1';
   loadAdminMenu();
 }
-async function editMenuItem(id,name,desc,shelf){
+
+async function editMenuItem(id,name,desc,shelf,cost,sell,unitType,servings){
   const n=prompt('Name:',name);if(!n)return;
   const d=prompt('Description:',desc);
   const s=parseInt(prompt('Shelf life (days):',shelf))||4;
-  await db.from('menu_items').update({name:n,description:d||null,shelf_life_days:s}).eq('id',id);loadAdminMenu();
+  const c=parseFloat(prompt('Cost per unit (RM):',cost))||0;
+  const sp=parseFloat(prompt('Selling price per unit (RM):',sell))||0;
+  await db.from('menu_items').update({name:n,description:d||null,shelf_life_days:s,cost_per_unit:c,selling_price:sp}).eq('id',id);
+  loadAdminMenu();
 }
+
 async function toggleMenuItem(id,val){await db.from('menu_items').update({is_active:val}).eq('id',id);loadAdminMenu();}
+
+async function loadOrderSettings(){
+  const{data}=await db.from('order_settings').select('*').limit(1);
+  if(data&&data.length>0){
+    document.getElementById('cutoff-time').value=data[0].cutoff_time?.substring(0,5)||'17:00';
+    document.getElementById('cutoff-type').value=data[0].cutoff_type||'hard';
+  }
+}
+
+async function saveCutoffSettings(){
+  const cutoff_time=document.getElementById('cutoff-time').value;
+  const cutoff_type=document.getElementById('cutoff-type').value;
+  const{data:clients}=await db.from('clients').select('id').limit(1);
+  const{data:existing}=await db.from('order_settings').select('id').limit(1);
+  if(existing&&existing.length>0){
+    await db.from('order_settings').update({cutoff_time,cutoff_type,updated_at:new Date().toISOString()}).eq('id',existing[0].id);
+  }else{
+    await db.from('order_settings').insert({cutoff_time,cutoff_type,client_id:clients?.[0]?.id});
+  }
+  alert('Cut-off settings saved!');
+}
+
+async function loadBlockoutDates(){
+  const{data}=await db.from('blockout_dates').select('*').order('blocked_date',{ascending:true});
+  const list=document.getElementById('blockout-list');
+  if(!data||data.length===0){list.innerHTML='<div class="empty">No blockout dates set</div>';return;}
+  const today=new Date().toISOString().split('T')[0];
+  list.innerHTML=data.map(b=>{
+    const isPast=b.blocked_date<today;
+    return`<div class="admin-item" style="${isPast?'opacity:0.5':''}">
+      <div>
+        <div class="admin-item-name">${formatDateOnly(b.blocked_date)}</div>
+        <div class="admin-item-sub">${b.reason||'No reason given'}${isPast?' · Past date':''}</div>
+      </div>
+      <button class="btn btn-sm btn-danger" onclick="deleteBlockoutDate('${b.id}')">Remove</button>
+    </div>`;
+  }).join('');
+}
+
+async function addBlockoutDate(){
+  const date=document.getElementById('new-blockout-date').value;
+  const reason=document.getElementById('new-blockout-reason').value.trim();
+  if(!date){alert('Please select a date.');return;}
+  const{data:clients}=await db.from('clients').select('id').limit(1);
+  await db.from('blockout_dates').insert({blocked_date:date,reason:reason||null,client_id:clients?.[0]?.id,created_by:currentStaffName||'HQ'});
+  document.getElementById('new-blockout-date').value='';document.getElementById('new-blockout-reason').value='';
+  loadBlockoutDates();
+}
+
+async function deleteBlockoutDate(id){
+  await db.from('blockout_dates').delete().eq('id',id);loadBlockoutDates();
+}
+
+// ── ORDER DETAIL ──
+async function openOrderDetail(orderId){
+  previousPage=document.querySelector('.page.active')?.id;
+  showPage('order-detail');
+  document.getElementById('order-detail-content').innerHTML='<div class="loader">Loading...</div>';
+  const{data:order,error}=await db.from('orders')
+    .select('*, outlets(name), order_items(*, menu_items(name,shelf_life_days,cost_per_unit,selling_price)), cake_units(*)')
+    .eq('id',orderId).single();
+  if(error||!order){document.getElementById('order-detail-content').innerHTML='<div class="alert alert-error">Failed to load.</div>';return;}
+  const{data:scansData}=await db.from('scans').select('*').eq('batch_id',orderId);
+  order.scans=scansData||[];
+  const dispatchScan=order.scans.find(s=>s.scan_type==='dispatch');
+  const receiveScan=order.scans.find(s=>s.scan_type==='received');
+  const shelfLife=order.order_items?.[0]?.menu_items?.shelf_life_days||4;
+  let bbLabel='',bbClass='';
+  if(order.picked_up_at){
+    const bb=new Date(order.picked_up_at);bb.setDate(bb.getDate()+shelfLife);
+    const dl=Math.ceil((bb-new Date())/(1000*60*60*24));
+    bbLabel=dl>1?`Best before ${formatDateOnly(bb)} (${dl} days)`:dl===1?'Expires tomorrow!':dl===0?'Use today!':'EXPIRED '+Math.abs(dl)+'d ago';
+    bbClass=dl>1?'bb-ok':dl>=0?'bb-warn':'bb-expired';
+  }
+  const daysSince=order.delivered_at?Math.floor((new Date()-new Date(order.delivered_at))/(1000*60*60*24)):null;
+  const steps=[
+    {label:'Order Placed',time:order.ordered_at,by:null,done:true},
+    {label:'Kitchen Ready',time:order.ready_at,by:null,done:!!order.ready_at},
+    {label:'Loaded by Driver',time:order.picked_up_at,by:dispatchScan?.scanned_by,done:!!order.picked_up_at},
+    {label:'Delivered',time:order.delivered_at,by:receiveScan?.scanned_by,done:!!order.delivered_at},
+  ];
+  const sc={not_ready:'nr',ready:'rd',in_transit:'tr',delivered:'dl'}[order.status]||'nr';
+  const showProgress=currentRole==='kitchen'||currentRole==='hq'||currentRole==='driver';
+  const allUnits=order.cake_units||[];
+  const total=allUnits.length;
+  const ready=allUnits.filter(u=>u.status!=='not_ready').length;
+  const pct=total>0?Math.round((ready/total)*100):0;
+  const isLate=order.notes?.includes('[LATE ORDER]');
+
+  document.getElementById('order-detail-content').innerHTML=`
+    <div class="detail-header">
+      <div class="detail-title">${order.outlets?.name||'Unknown'} ${isLate?'<span style="background:var(--nr-bar);color:white;font-size:10px;padding:2px 8px;border-radius:10px">LATE ORDER</span>':''}</div>
+      <div class="detail-sub">${(order.order_items||[]).map(i=>`${i.menu_items?.name} × ${i.quantity}`).join(', ')}</div>
+      <div class="detail-badges">
+        <span class="badge badge-${sc}">${formatStatus(order.status)}</span>
+        ${bbLabel?`<span class="${bbClass}">${bbLabel}</span>`:''}
+        ${daysSince!==null?`<span style="font-size:11px;color:#aaa">${daysSince===0?'Delivered today':`${daysSince}d since delivery`}</span>`:''}
+      </div>
+    </div>
+
+    ${showProgress&&total>0?`
+    <div style="background:var(--white);border-radius:6px;padding:14px 16px;margin-bottom:16px;border-top:3px solid var(--mustard)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-size:11px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;color:#888">Preparation Progress</div>
+        <div style="font-size:14px;font-weight:700;color:var(--${sc}-bar)">${pct}%</div>
+      </div>
+      <div class="progress-bar" style="height:8px"><div class="progress-fill" style="width:${pct}%;background:var(--${sc}-bar)"></div></div>
+      <div style="font-size:10px;color:#aaa;margin-top:6px;margin-bottom:12px">${ready} of ${total} items scanned ready</div>
+      ${allUnits.map(u=>{
+        const oi=order.order_items?.find(i=>i.id===u.order_item_id);
+        const sc2={not_ready:'nr',ready:'rd',in_transit:'tr',delivered:'dl'}[u.status]||'nr';
+        return`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f8f5f0">
+          <div style="width:18px;height:18px;border-radius:50%;border:2px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0;${u.status!=='not_ready'?'background:var(--dl-bar);border-color:var(--dl-bar);color:white':''}">${u.status!=='not_ready'?'✓':''}</div>
+          <div style="flex:1">
+            <div style="font-family:monospace;font-size:11px">${u.serial_number}</div>
+            <div style="font-size:10px;color:#aaa">${oi?.menu_items?.name||'Item'}${u.scanned_by_kitchen?` · by ${u.scanned_by_kitchen}`:''}</div>
+          </div>
+          <span class="badge badge-${sc2}" style="font-size:9px;padding:2px 6px">${formatStatus(u.status)}</span>
+          <button class="btn btn-sm btn-primary" onclick="showCakeQR('${u.id}','${u.serial_number}','${oi?.menu_items?.name||'Item'}','${order.outlets?.name||''}','${order.ordered_at}','${order.picked_up_at||''}',${oi?.menu_items?.shelf_life_days||4})" style="font-size:9px;padding:4px 8px">QR</button>
+        </div>`;
+      }).join('')}
+    </div>`:''}
+
+    ${!showProgress&&total>0?`
+    <div style="background:var(--white);border-radius:6px;padding:14px 16px;margin-bottom:16px;border-top:3px solid var(--mustard)">
+      <div class="timeline-title">Items in this order</div>
+      ${allUnits.map(u=>{
+        const oi=order.order_items?.find(i=>i.id===u.order_item_id);
+        const sc2={not_ready:'nr',ready:'rd',in_transit:'tr',delivered:'dl'}[u.status]||'nr';
+        return`<div class="unit-row">
+          <div>
+            <div class="unit-serial">${u.serial_number}</div>
+            <div style="font-size:10px;color:#aaa;margin-top:2px">${oi?.menu_items?.name||'Item'} · <span class="badge badge-${sc2}" style="font-size:9px;padding:2px 6px">${formatStatus(u.status)}</span></div>
+          </div>
+          <button class="btn btn-sm btn-primary" onclick="showCakeQR('${u.id}','${u.serial_number}','${oi?.menu_items?.name||'Item'}','${order.outlets?.name||''}','${order.ordered_at}','${order.picked_up_at||''}',${oi?.menu_items?.shelf_life_days||4})" style="font-size:9px;padding:4px 8px">QR</button>
+        </div>`;
+      }).join('')}
+    </div>`:''}
+
+    <div class="info-grid">
+      <div class="info-item"><div class="info-label">Outlet</div><div class="info-value">${order.outlets?.name||'—'}</div></div>
+      <div class="info-item"><div class="info-label">Ordered</div><div class="info-value">${formatDate(order.ordered_at)}</div></div>
+      <div class="info-item"><div class="info-label">Driver</div><div class="info-value">${dispatchScan?.scanned_by||'—'}</div></div>
+      <div class="info-item"><div class="info-label">Received By</div><div class="info-value">${receiveScan?.scanned_by||'—'}</div></div>
+      ${order.picked_up_at?`<div class="info-item"><div class="info-label">Dispatched</div><div class="info-value">${formatDate(order.picked_up_at)}</div></div>`:''}
+      ${order.delivered_at?`<div class="info-item"><div class="info-label">Delivered</div><div class="info-value">${formatDate(order.delivered_at)}</div></div>`:''}
+      ${bbLabel?`<div class="info-item"><div class="info-label">Best Before</div><div class="info-value ${bbClass}">${bbLabel}</div></div>`:''}
+    </div>
+
+    <div class="timeline-wrap">
+      <div class="timeline-title">Delivery Timeline</div>
+      ${steps.map((step,i)=>{
+        const isActive=!step.done&&(i===0||steps[i-1]?.done);
+        return`<div class="tl-step">
+          <div class="tl-dot ${step.done?'done':isActive?'active':'pending'}">${step.done?'✓':i+1}</div>
+          <div class="tl-content">
+            <div class="tl-label">${step.label}</div>
+            ${step.time?`<div class="tl-time">${formatDate(step.time)}</div>`:'<div class="tl-time" style="color:#ddd">Pending</div>'}
+            ${step.by?`<div class="tl-by">by ${step.by}</div>`:''}
+            ${step.label==='Delivered'&&receiveScan?.photo_url?`<img src="${receiveScan.photo_url}" class="tl-photo" onclick="window.open('${receiveScan.photo_url}','_blank')"/>`:''}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    ${currentRole==='hq'?`
+      <div class="card" style="border-top-color:var(--nr-bar)">
+        <h2>HQ Override</h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+          ${['not_ready','ready','in_transit','delivered'].map(s=>
+            `<button class="btn btn-sm ${order.status===s?'btn-mustard':'btn-primary'}" onclick="adminOverride('${order.id}','${s}')">${formatStatus(s)}</button>`
+          ).join('')}
+          <button class="btn btn-sm btn-danger" onclick="deleteOrder('${order.id}')">Delete Order</button>
+        </div>
+      </div>`:''}`;
+}
+
+// ── QR MODAL ──
+function showCakeQR(unitId,serial,itemName,outletName,orderedAt,pickedUpAt,shelfLife){
+  const url=`${window.location.origin}${window.location.pathname}?track=${unitId}`;
+  const mfgDate=formatDateOnly(orderedAt);
+  let bbLabel='Pending dispatch';
+  if(pickedUpAt&&pickedUpAt!==''){
+    const bb=new Date(pickedUpAt);bb.setDate(bb.getDate()+(parseInt(shelfLife)||4));
+    bbLabel=formatDateOnly(bb.toISOString());
+  }
+  const existing=document.getElementById('qr-modal');if(existing)existing.remove();
+  const modal=document.createElement('div');
+  modal.id='qr-modal';modal.className='qr-modal';
+  modal.onclick=e=>{if(e.target===modal)modal.remove();};
+  modal.innerHTML=`
+    <div class="qr-modal-box">
+      <div class="qr-modal-hdr"><div class="qr-modal-title">DOJO <span style="color:var(--mustard)">INTERFACE</span> — ITEM QR STICKER</div></div>
+      <div class="qr-sticker">
+        <div class="qr-sticker-logo">DOJO <span>INTERFACE</span> — CHAIN OF CUSTODY</div>
+        <div class="qr-field"><span class="qr-field-label">ITEM</span><span class="qr-field-value">${itemName}</span></div>
+        <div class="qr-field"><span class="qr-field-label">SERIAL</span><span class="qr-field-value">${serial}</span></div>
+        <div class="qr-field"><span class="qr-field-label">OUTLET</span><span class="qr-field-value">${outletName}</span></div>
+        <div class="qr-field"><span class="qr-field-label">MFG DATE</span><span class="qr-field-value">${mfgDate}</span></div>
+        <div class="qr-field"><span class="qr-field-label">BEST BEFORE</span><span class="qr-field-value">${bbLabel}</span></div>
+        <div class="qr-code-wrap" id="qr-render-here"></div>
+        <div style="font-size:9px;color:#aaa;text-align:center;letter-spacing:0.5px">SCAN TO VIEW FULL DELIVERY HISTORY</div>
+      </div>
+      <div class="qr-modal-actions">
+        <button class="btn btn-primary btn-sm" id="download-qr-btn">Download PNG</button>
+        <button class="btn btn-sm" style="background:var(--canvas);border:1px solid #ddd" onclick="document.getElementById('qr-modal').remove()">Close</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  const qrDiv=document.getElementById('qr-render-here');
+  new QRCode(qrDiv,{text:url,width:160,height:160,colorDark:'#2C2A25',colorLight:'#ffffff'});
+  document.getElementById('download-qr-btn').onclick=()=>{
+    setTimeout(()=>{
+      const qrCanvas=qrDiv.querySelector('canvas');if(!qrCanvas){alert('QR not ready, try again.');return;}
+      const dl=document.createElement('canvas');dl.width=400;dl.height=520;
+      const ctx=dl.getContext('2d');
+      ctx.fillStyle='#ffffff';ctx.fillRect(0,0,400,520);
+      ctx.fillStyle='#2C2A25';ctx.fillRect(0,0,400,44);
+      ctx.fillStyle='#EF9F27';ctx.fillRect(0,41,400,3);
+      ctx.fillStyle='#F5F0E8';ctx.font='bold 11px monospace';ctx.textAlign='center';
+      ctx.fillText('DOJO INTERFACE — CHAIN OF CUSTODY',200,27);
+      const fields=[['ITEM',itemName],['SERIAL',serial],['OUTLET',outletName],['MFG DATE',mfgDate],['BEST BEFORE',bbLabel]];
+      let y=66;
+      fields.forEach(([label,value])=>{
+        ctx.fillStyle='#888';ctx.font='10px sans-serif';ctx.textAlign='left';ctx.fillText(label,24,y);
+        ctx.fillStyle='#2C2A25';ctx.font='bold 11px monospace';ctx.textAlign='right';ctx.fillText(value,376,y);
+        y+=24;ctx.fillStyle='#f0ede6';ctx.fillRect(24,y-12,352,1);
+      });
+      ctx.drawImage(qrCanvas,120,y+8,160,160);
+      ctx.fillStyle='#aaa';ctx.font='9px monospace';ctx.textAlign='center';
+      ctx.fillText('SCAN TO VIEW FULL DELIVERY HISTORY',200,y+182);
+      const link=document.createElement('a');
+      link.download=`QR-${serial}.png`;link.href=dl.toDataURL('image/png');link.click();
+    },500);
+  };
+}
 
 // ── SHARED RENDER ──
 function renderOrderList(containerId,data){
@@ -1694,11 +2439,15 @@ function renderOrderList(containerId,data){
   const sMap={not_ready:'nr',ready:'rd',in_transit:'tr',delivered:'dl'};
   list.innerHTML=data.map(order=>{
     const sc=sMap[order.status]||'nr';
-    const pct={not_ready:0,ready:33,in_transit:66,delivered:100}[order.status]||0;
+    const allUnits=order.cake_units||[];
+    const total=allUnits.length;
+    const ready=allUnits.filter(u=>u.status!=='not_ready').length;
+    const pct=total>0?Math.round((ready/total)*100):{not_ready:0,ready:33,in_transit:66,delivered:100}[order.status]||0;
+    const isLate=order.notes?.includes('[LATE ORDER]');
     return`<div class="order-card ${sc}" onclick="openOrderDetail('${order.id}')">
       <div class="order-card-head">
         <div>
-          <div class="order-title">${order.outlets?.name||'Unknown'}</div>
+          <div class="order-title">${order.outlets?.name||'Unknown'} ${isLate?'<span style="background:var(--nr-bg);color:var(--nr-text);font-size:9px;padding:2px 6px;border-radius:10px;font-weight:600">LATE</span>':''}</div>
           <div class="order-meta">${(order.order_items||[]).map(i=>`${i.menu_items?.name} × ${i.quantity}`).join(', ')}</div>
           <div class="order-sub">${formatDate(order.ordered_at)}</div>
         </div>
@@ -1716,7 +2465,7 @@ async function loadTrackingPage(unitId){
   const{data:unit,error}=await db.from('cake_units')
     .select('*, orders(*, outlets(name), order_items(*, menu_items(name,shelf_life_days))), menu_items(name)')
     .eq('id',unitId).single();
-  if(error||!unit){container.innerHTML='<div class="alert alert-error">Cake not found.</div>';return;}
+  if(error||!unit){container.innerHTML='<div class="alert alert-error">Item not found.</div>';return;}
   const order=unit.orders;
   const{data:scansData}=await db.from('scans').select('*').eq('batch_id',order.id);
   const scans=scansData||[];
@@ -1731,7 +2480,6 @@ async function loadTrackingPage(unitId){
     const label=dl>1?`Best before ${formatDateOnly(bb)} (${dl} days)`:dl===1?'Expires tomorrow!':dl===0?'Use today!':'EXPIRED';
     bbHtml=`<div class="${cls}" style="font-size:13px;font-weight:700;margin-top:8px">${label}</div>`;
   }
-  const daysSince=order.delivered_at?Math.floor((new Date()-new Date(order.delivered_at))/(1000*60*60*24)):null;
   const sc={not_ready:'nr',ready:'rd',in_transit:'tr',delivered:'dl'}[unit.status]||'nr';
   const steps=[
     {label:'Order Placed',time:order.ordered_at,by:null,done:true},
@@ -1741,12 +2489,11 @@ async function loadTrackingPage(unitId){
   ];
   container.innerHTML=`
     <div style="background:var(--charcoal);color:var(--canvas);padding:20px;margin:-16px -16px 16px;border-bottom:3px solid var(--mustard)">
-      <div style="font-size:10px;color:#888;letter-spacing:1px;margin-bottom:6px">DOJO INTERFACE — CAKE TRACKER</div>
-      <div style="font-size:18px;font-weight:700">${unit.menu_items?.name||'Cake'}</div>
+      <div style="font-size:10px;color:#888;letter-spacing:1px;margin-bottom:6px">DOJO INTERFACE — ITEM TRACKER</div>
+      <div style="font-size:18px;font-weight:700">${unit.menu_items?.name||'Item'}</div>
       <div style="font-size:11px;font-family:monospace;color:#aaa;margin-top:4px">${unit.serial_number}</div>
       <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <span class="badge badge-${sc}">${formatStatus(unit.status)}</span>
-        ${daysSince!==null?`<span style="font-size:11px;color:#aaa">${daysSince===0?'Delivered today':`${daysSince}d since delivery`}</span>`:''}
       </div>
       ${bbHtml}
     </div>
@@ -1786,18 +2533,25 @@ window.addEventListener('load',()=>{
   currentMode=saved;applyMode();updateGreeting();
   setInterval(applyMode,60000);
   loadActiveBlasts();
+  ['auto','day','night'].forEach(m=>{
+    const b=document.getElementById('mode-'+m);
+    if(b)b.classList.toggle('active',currentMode===m);
+  });
   const params=new URLSearchParams(window.location.search);
   const trackId=params.get('track');
   if(trackId){
     document.getElementById('lobby').style.display='none';
     document.getElementById('main-app').style.display='block';
     document.getElementById('main-nav').style.display='none';
+    document.getElementById('hq-sidebar').style.display='none';
+    document.getElementById('hq-topbar').style.display='none';
+    document.getElementById('main-hdr').style.display='flex';
     document.getElementById('role-label').textContent='TRACKING';
     showPage('tracking-page');
     loadTrackingPage(trackId);
   }
 });
-window.addEventListener('resize',()=>{if(currentRole==='admin'||currentRole==='kitchen')initViews();});
+window.addEventListener('resize',()=>{if(currentRole==='hq'||currentRole==='kitchen')initViews();});
 </script>
 </body>
 </html>
