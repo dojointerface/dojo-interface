@@ -412,6 +412,36 @@
     .empty{text-align:center;padding:40px 20px;color:#bbb;font-size:13px}
     .loader{text-align:center;padding:30px;color:#aaa;font-size:12px;letter-spacing:1px}
     .section-label{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:10px;margin-top:4px}
+/* ── BROADCAST POPUP ── */
+.broadcast-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9997;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.broadcast-bubble{background:var(--white);border-radius:20px;max-width:420px;width:100%;overflow:hidden;animation:bubbleIn 0.4s cubic-bezier(0.34,1.56,0.64,1)}
+.broadcast-bubble-hdr{background:var(--charcoal);padding:16px 20px;border-bottom:3px solid var(--mustard);display:flex;align-items:center;gap:10px}
+.broadcast-bubble-dot{width:10px;height:10px;border-radius:50%;background:var(--mustard);animation:pulse 1.5s infinite;flex-shrink:0}
+.broadcast-bubble-title{color:#F5F0E8;font-size:12px;font-weight:700;letter-spacing:1px;flex:1}
+.broadcast-bubble-time{color:#888;font-size:10px}
+.broadcast-bubble-body{padding:20px}
+.broadcast-bubble-msg{font-size:14px;color:var(--charcoal);line-height:1.6;font-weight:500}
+.broadcast-bubble-sender{font-size:11px;color:#aaa;margin-top:8px}
+.broadcast-bubble-dismiss{width:100%;padding:12px;background:var(--charcoal);color:var(--canvas);border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;margin-top:16px;transition:background 0.2s}
+.broadcast-bubble-dismiss:hover{background:#3d3a33}
+.broadcast-bubble-more{font-size:11px;color:#aaa;text-align:center;margin-top:8px}
+
+/* ── PUBLIC SCAN PAGE ── */
+.public-scan-wrap{min-height:100vh;background:var(--canvas);display:flex;flex-direction:column}
+.public-scan-hdr{background:var(--charcoal);padding:16px 20px;border-bottom:3px solid var(--mustard);display:flex;align-items:center;gap:10px}
+.public-scan-body{flex:1;padding:20px;max-width:480px;margin:0 auto;width:100%}
+.public-scan-card{background:var(--white);border-radius:12px;overflow:hidden;margin-bottom:16px;border-top:3px solid var(--mustard)}
+.public-scan-card-hdr{background:var(--charcoal);padding:14px 16px}
+.public-status-flow{display:flex;align-items:center;justify-content:center;gap:8px;padding:16px 0;flex-wrap:wrap}
+.public-status-step{display:flex;flex-direction:column;align-items:center;gap:4px}
+.public-status-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.public-status-dot.done{background:var(--charcoal);color:var(--mustard)}
+.public-status-dot.active{background:var(--mustard);color:var(--charcoal)}
+.public-status-dot.pending{background:#f0ede6;color:#bbb}
+.public-status-label{font-size:9px;color:#aaa;letter-spacing:0.5px;text-align:center}
+.public-status-line{width:24px;height:2px;background:#f0ede6;margin-top:-20px}
+.public-action-form{padding:16px}
+.public-blocked{background:var(--nr-bg);color:var(--nr-text);padding:16px;border-radius:8px;font-size:13px;font-weight:500;text-align:center;margin:16px}
   </style>
 </head>
 <body class="day">
@@ -1653,8 +1683,17 @@ async function openLogin(role){
     document.getElementById('login-title').textContent='Outlet Sign In';
     document.getElementById('login-sub').textContent='Select your outlet and enter your name';
     document.getElementById('login-outlet-field').style.display='block';
-    document.getElementById('login-name-field').style.display='block';
-    const{data:outlets}=await db.from('outlets').select('*').eq('is_active',true).order('name');
+   document.getElementById('login-name-field').style.display='block';
+const{data:outlets}=await db.from('outlets').select('*').eq('is_active',true).order('name');
+// Add outlet code field dynamically
+let codeField=document.getElementById('login-outlet-code-field');
+if(!codeField){
+  codeField=document.createElement('div');
+  codeField.id='login-outlet-code-field';
+  codeField.className='login-field';
+  codeField.innerHTML=`<label>Outlet Code</label><input type="text" id="login-outlet-code-input" placeholder="e.g. OT-001" style="text-transform:uppercase"/>`;
+  document.getElementById('login-name-field').after(codeField);
+}
     const sel=document.getElementById('login-outlet-select');
     sel.innerHTML='<option value="">— Select outlet —</option>'+(outlets||[]).map(o=>`<option value="${o.id}">${o.name}</option>`).join('');
   }else if(role==='kitchen'){
@@ -1682,22 +1721,28 @@ async function submitLogin(){
   if(loginRole==='hq'){
     if(getPin()!==HQ_PIN){document.getElementById('pin-error').style.display='block';return;}
     currentRole='hq';currentStaffName='Admin';currentOutletId=null;currentOutletName=null;
-  }else if(loginRole==='outlet'){
-    const sel=document.getElementById('login-outlet-select');
-    const outletId=sel.value;const name=document.getElementById('login-name-input').value.trim();
-    if(!outletId){alert('Please select your outlet.');return;}
-    if(!name){alert('Please enter your name.');return;}
-    currentRole='outlet';currentStaffName=name;
-    currentOutletId=outletId;currentOutletName=sel.options[sel.selectedIndex].text;
-  }else if(loginRole==='kitchen'){
-    const name=document.getElementById('login-name-input').value.trim();
-    if(!name){alert('Please enter your name.');return;}
-    currentRole='kitchen';currentStaffName=name;currentOutletId=null;currentOutletName=null;
-  }else if(loginRole==='driver'){
-    const name=document.getElementById('login-name-input').value.trim();
-    if(!name){alert('Please enter your name.');return;}
-    currentRole='driver';currentStaffName=name;currentOutletId=null;currentOutletName=null;
+ }else if(loginRole==='outlet'){
+  const sel=document.getElementById('login-outlet-select');
+  const outletId=sel.value;
+  const name=document.getElementById('login-name-input').value.trim();
+  const outletCode=document.getElementById('login-outlet-code-input')?.value.trim().toUpperCase();
+  if(!outletId){alert('Please select your outlet.');return;}
+  if(!name){alert('Please enter your name.');return;}
+  // Get outlet details
+  const{data:outlet}=await db.from('outlets').select('*').eq('id',outletId).single();
+  // Verify outlet code if outlets have codes
+  if(outlet?.outlet_code&&outletCode&&outlet.outlet_code.toUpperCase()!==outletCode){
+    alert('Incorrect outlet code. Please check with your manager.');return;
   }
+  // Verify PIN if required
+  if(outlet?.pin_required&&outlet?.pin){
+    const enteredPin=[0,1,2,3].map(i=>document.getElementById(`pin${i}`)?.value||'').join('');
+    if(enteredPin!==outlet.pin){
+      document.getElementById('pin-error').style.display='block';return;
+    }
+  }
+  currentRole='outlet';currentStaffName=name;
+  currentOutletId=outletId;currentOutletName=sel.options[sel.selectedIndex].text;
   closeLogin();
   enterApp();
 }
@@ -2370,23 +2415,50 @@ async function loadAdminOutlets(){
   const list=document.getElementById('outlets-list');
   if(!data||data.length===0){list.innerHTML='<div class="empty">No outlets yet</div>';return;}
   list.innerHTML=data.map(o=>`
-    <div class="admin-item">
-      <div><div class="admin-item-name">${o.name}</div><div class="admin-item-sub">${o.is_active?'Active':'Disabled'} · PIN: ${o.pin?'Set':'Not set'}</div></div>
-      <div class="admin-actions">
-        <button class="btn btn-sm btn-primary" onclick="editOutlet('${o.id}','${o.name}','${o.pin||''}')">Edit</button>
-        <button class="btn btn-sm ${o.is_active?'btn-danger':'btn-success'}" onclick="toggleOutlet('${o.id}',${!o.is_active})">${o.is_active?'Disable':'Enable'}</button>
+    <div class="admin-item" style="flex-direction:column;align-items:flex-start;gap:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+        <div>
+          <div class="admin-item-name">${o.name}</div>
+          <div class="admin-item-sub">
+            Code: <strong>${o.outlet_code||'—'}</strong> · 
+            ${o.is_active?'Active':'Disabled'} · 
+            PIN: ${o.pin?'Set':'Not set'} · 
+            PIN required: ${o.pin_required?'Yes':'No'}
+          </div>
+        </div>
+        <div class="admin-actions">
+          <button class="btn btn-sm btn-primary" onclick="editOutlet('${o.id}','${o.name}','${o.pin||''}','${o.outlet_code||''}',${o.pin_required})">Edit</button>
+          <button class="btn btn-sm ${o.is_active?'btn-danger':'btn-success'}" onclick="toggleOutlet('${o.id}',${!o.is_active})">${o.is_active?'Disable':'Enable'}</button>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;width:100%;padding-top:8px;border-top:1px solid #f0ede6">
+        <div style="font-size:11px;color:#888">Require PIN to log in:</div>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;font-size:12px;margin:0;letter-spacing:0">
+          <input type="checkbox" ${o.pin_required?'checked':''} onchange="togglePinRequired('${o.id}',this.checked)" style="width:16px;height:16px;margin:0"/>
+          ${o.pin_required?'PIN required':'PIN optional'}
+        </label>
+        <div style="font-size:11px;font-family:monospace;background:var(--canvas);padding:4px 10px;border-radius:4px;color:var(--charcoal);font-weight:700;cursor:pointer" onclick="copyOutletCode('${o.outlet_code||''}')" title="Click to copy">
+          ${o.outlet_code||'No code'} 📋
+        </div>
       </div>
     </div>`).join('');
 }
 
-async function addOutlet(){
-  const name=document.getElementById('new-outlet-name').value.trim();
-  const pin=document.getElementById('new-outlet-pin').value.trim();
-  if(!name){alert('Please enter a name.');return;}
-  const{data:clients}=await db.from('clients').select('id').limit(1);
-  await db.from('outlets').insert({name,client_id:clients?.[0]?.id,is_active:true,pin:pin||null});
-  document.getElementById('new-outlet-name').value='';document.getElementById('new-outlet-pin').value='';
+async function togglePinRequired(id,val){
+  await db.from('outlets').update({pin_required:val}).eq('id',id);
   loadAdminOutlets();
+}
+
+function copyOutletCode(code){
+  navigator.clipboard.writeText(code).then(()=>alert(`Copied: ${code}`));
+}
+
+async function editOutlet(id,name,pin,code,pinRequired){
+  const n=prompt('Outlet name:',name);if(!n)return;
+  const p=prompt('Set PIN (leave blank to remove):',pin);
+  await db.from('outlets').update({name:n,pin:p||null}).eq('id',id);
+  loadAdminOutlets();
+}
 }
 
 async function editOutlet(id,name,pin){
@@ -2619,7 +2691,7 @@ async function openOrderDetail(orderId){
 
 // ── QR MODAL ──
 function showCakeQR(unitId,serial,itemName,outletName,orderedAt,pickedUpAt,shelfLife){
-  const url=`${window.location.origin}${window.location.pathname}?track=${unitId}`;
+  const url=`${window.location.origin}${window.location.pathname}?scan=${unitId}`;
   const mfgDate=formatDateOnly(orderedAt);
   let bbLabel='Pending dispatch';
   if(pickedUpAt&&pickedUpAt!==''){
@@ -2765,7 +2837,330 @@ async function loadTrackingPage(unitId){
     </div>
     <div style="text-align:center;padding:20px 0;color:#aaa;font-size:10px;letter-spacing:1px">POWERED BY DOJO INTERFACE</div>`;
 }
+// ── BROADCAST POPUP ──
+let activeBroadcast=null;
+let broadcastDismissed=false;
 
+async function checkAndShowBroadcast(){
+  const{data}=await db.from('blast_notifications').select('*')
+    .gt('expires_at',new Date().toISOString())
+    .order('created_at',{ascending:false})
+    .limit(1);
+  if(!data||data.length===0)return;
+  const blast=data[0];
+  // Check if already dismissed this session
+  const dismissed=sessionStorage.getItem('dismissed_blast_'+blast.id);
+  if(dismissed)return;
+  activeBroadcast=blast;
+  document.getElementById('broadcast-msg').textContent=blast.message;
+  document.getElementById('broadcast-sender').textContent=
+    `Sent by ${blast.sent_by} · Expires ${formatDate(blast.expires_at)}`;
+  const remaining=Math.ceil((new Date(blast.expires_at)-new Date())/(1000*60*60));
+  document.getElementById('broadcast-time').textContent=`${remaining}h left`;
+  const others=data.length>1?`+${data.length-1} more broadcast${data.length>1?'s':''}`:null;
+  const moreEl=document.getElementById('broadcast-more');
+  if(others){moreEl.textContent=others;}else{moreEl.style.display='none';}
+  document.getElementById('broadcast-overlay').style.display='flex';
+}
+
+function dismissBroadcast(){
+  if(activeBroadcast){
+    sessionStorage.setItem('dismissed_blast_'+activeBroadcast.id,'true');
+  }
+  document.getElementById('broadcast-overlay').style.display='none';
+  // Strip stays visible — already rendered by loadActiveBlasts()
+}
+
+function dismissBroadcastIfOutside(e){
+  if(e.target===document.getElementById('broadcast-overlay'))dismissBroadcast();
+}
+
+// ── PUBLIC QR SCAN PAGE ──
+async function loadPublicScanPage(unitId){
+  document.getElementById('lobby').style.display='none';
+  document.getElementById('main-app').style.display='none';
+  document.getElementById('public-scan-page').style.display='flex';
+
+  const container=document.getElementById('public-scan-content');
+  container.innerHTML='<div class="loader">Loading...</div>';
+
+  // Load unit + order data
+  const{data:unit,error}=await db.from('cake_units')
+    .select('*, orders(*, outlets(name,outlet_code,pin_required,pin), order_items(*, menu_items(name,shelf_life_days))), menu_items(name)')
+    .eq('id',unitId).single();
+
+  if(error||!unit){
+    container.innerHTML='<div class="alert alert-error" style="margin:20px">Item not found. Please scan the correct QR code.</div>';
+    return;
+  }
+
+  const order=unit.orders;
+  const outlet=order.outlets;
+  const sc={not_ready:'nr',ready:'rd',in_transit:'tr',delivered:'dl'}[unit.status]||'nr';
+
+  // Status flow display
+  const steps=[
+    {label:'Ordered',done:true},
+    {label:'Kitchen Ready',done:!!unit.scanned_ready_at},
+    {label:'In Transit',done:!!unit.driver_scan_at},
+    {label:'Delivered',done:!!unit.scanned_delivered_at},
+  ];
+
+  const statusFlow=`
+    <div class="public-status-flow">
+      ${steps.map((step,i)=>`
+        ${i>0?'<div class="public-status-line"></div>':''}
+        <div class="public-status-step">
+          <div class="public-status-dot ${step.done?'done':i===steps.findIndex(s=>!s.done)?'active':'pending'}">
+            ${step.done?'✓':i+1}
+          </div>
+          <div class="public-status-label">${step.label}</div>
+        </div>`).join('')}
+    </div>`;
+
+  // Determine what action is available
+  let actionHtml='';
+
+  if(unit.status==='not_ready'){
+    actionHtml=`<div class="public-blocked">
+      <div style="font-size:24px;margin-bottom:8px">⏳</div>
+      <div style="font-weight:700;margin-bottom:4px">Not Ready Yet</div>
+      <div style="font-size:12px">This item is still being prepared by the kitchen.</div>
+    </div>`;
+  }else if(unit.status==='ready'){
+    // Driver pickup form
+    actionHtml=`
+      <div class="public-action-form">
+        <div class="alert alert-info" style="margin-bottom:16px;font-size:12px">
+          This item is ready for pickup. Enter your details to confirm loading.
+        </div>
+        <label>Your Name *</label>
+        <input type="text" id="pub-driver-name" placeholder="e.g. Ahmad bin Razak"/>
+        <label>Vehicle Number *</label>
+        <input type="text" id="pub-driver-vehicle" placeholder="e.g. WA 1234 B" style="text-transform:uppercase"/>
+        <label>Delivery Company</label>
+        <input type="text" id="pub-driver-company" placeholder="e.g. Lalamove, Grab, Own vehicle"/>
+        <button class="btn btn-mustard" onclick="publicConfirmPickup('${unitId}','${order.id}','${outlet.name}')">
+          Confirm Loading
+        </button>
+        <div style="font-size:10px;color:#aaa;text-align:center;margin-top:8px">
+          Your details will be recorded for accountability purposes
+        </div>
+      </div>`;
+  }else if(unit.status==='in_transit'){
+    // Outlet delivery confirmation
+    actionHtml=`
+      <div class="public-action-form">
+        <div class="alert alert-warning" style="margin-bottom:16px;font-size:12px">
+          This item is on the way to <strong>${outlet.name}</strong>. 
+          Only outlet staff should confirm receipt.
+        </div>
+        <label>Outlet Code *</label>
+        <input type="text" id="pub-outlet-code" placeholder="e.g. OT-001" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"/>
+        <label>Your Name *</label>
+        <input type="text" id="pub-outlet-name" placeholder="e.g. Amirah"/>
+        ${outlet.pin_required?`
+          <label>Outlet PIN *</label>
+          <div class="pin-row" style="margin-top:6px">
+            <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" id="pub-pin0" onkeyup="pubPinNext(0,event)"/>
+            <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" id="pub-pin1" onkeyup="pubPinNext(1,event)"/>
+            <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" id="pub-pin2" onkeyup="pubPinNext(2,event)"/>
+            <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" id="pub-pin3" onkeyup="pubPinNext(3,event)"/>
+          </div>
+          <div id="pub-pin-error" style="color:#501313;font-size:11px;margin-top:6px;display:none">Incorrect PIN.</div>
+        `:''}
+        <label>Photo Proof *</label>
+        <input type="file" id="pub-outlet-photo" accept="image/*" capture="environment" onchange="previewPhoto('pub-outlet-photo','pub-photo-preview')"/>
+        <img id="pub-photo-preview" class="photo-preview"/>
+        <label>Notes (optional)</label>
+        <input type="text" id="pub-outlet-notes" placeholder="e.g. All items in good condition"/>
+        <button class="btn btn-success" onclick="publicConfirmDelivery('${unitId}','${order.id}','${outlet.outlet_code}','${outlet.pin||''}',${outlet.pin_required})">
+          Confirm Receipt
+        </button>
+        <div style="font-size:10px;color:#aaa;text-align:center;margin-top:8px">
+          Outlet code must match this delivery's destination
+        </div>
+      </div>`;
+  }else if(unit.status==='delivered'){
+    actionHtml=`<div class="public-blocked" style="background:var(--dl-bg);color:var(--dl-text)">
+      <div style="font-size:24px;margin-bottom:8px">✓</div>
+      <div style="font-weight:700;margin-bottom:4px">Delivered</div>
+      <div style="font-size:12px">This item was confirmed received. See timeline below.</div>
+    </div>`;
+  }
+
+  // Best before
+  let bbHtml='';
+  if(order.picked_up_at){
+    const shelfLife=order.order_items?.[0]?.menu_items?.shelf_life_days||4;
+    const bb=new Date(order.picked_up_at);bb.setDate(bb.getDate()+shelfLife);
+    const dl=Math.ceil((bb-new Date())/(1000*60*60*24));
+    const cls=dl>1?'bb-ok':dl>=0?'bb-warn':'bb-expired';
+    const label=dl>1?`Best before ${formatDateOnly(bb)}`:dl===1?'Expires tomorrow!':dl===0?'Use today!':'EXPIRED';
+    bbHtml=`<div class="${cls}" style="font-size:12px;font-weight:600;padding:0 16px 12px">${label}</div>`;
+  }
+
+  container.innerHTML=`
+    <div class="public-scan-card">
+      <div class="public-scan-card-hdr">
+        <div style="color:#F5F0E8;font-size:16px;font-weight:700">${unit.menu_items?.name||'Item'}</div>
+        <div style="font-family:monospace;color:#aaa;font-size:11px;margin-top:4px">${unit.serial_number}</div>
+        <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+          <span class="badge badge-${sc}">${formatStatus(unit.status)}</span>
+          <span style="font-size:11px;color:#aaa">→ ${outlet.name}</span>
+        </div>
+      </div>
+      ${statusFlow}
+      ${bbHtml}
+    </div>
+
+    <div class="public-scan-card" style="border-top-color:${unit.status==='ready'?'var(--mustard)':unit.status==='in_transit'?'var(--tr-bar)':unit.status==='delivered'?'var(--dl-bar)':'var(--nr-bar)'}">
+      ${actionHtml}
+    </div>
+
+    <div class="public-scan-card">
+      <div style="padding:14px 16px">
+        <div class="timeline-title">Delivery Timeline</div>
+        <div style="font-size:12px;display:flex;flex-direction:column;gap:8px">
+          ${[
+            {label:'Order Placed',time:order.ordered_at,by:null,done:true},
+            {label:'Kitchen Ready',time:unit.scanned_ready_at,by:unit.scanned_by_kitchen,done:!!unit.scanned_ready_at},
+            {label:'Loaded',time:unit.driver_scan_at,by:unit.rider_name,done:!!unit.driver_scan_at},
+            {label:'Delivered',time:unit.scanned_delivered_at,by:null,done:!!unit.scanned_delivered_at},
+          ].map((step,i)=>`
+            <div style="display:flex;gap:10px;align-items:flex-start">
+              <div class="tl-dot ${step.done?'done':'pending'}" style="width:22px;height:22px;font-size:10px;flex-shrink:0">${step.done?'✓':i+1}</div>
+              <div style="padding-top:2px">
+                <div style="font-weight:600;color:var(--charcoal)">${step.label}</div>
+                ${step.time?`<div style="font-size:10px;color:#888">${formatDate(step.time)}</div>`:'<div style="font-size:10px;color:#ddd">Pending</div>'}
+                ${step.by?`<div style="font-size:10px;color:var(--rd-text)">by ${step.by}</div>`:''}
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+function pubPinNext(i,e){
+  if(e.target.value.length===1&&i<3)document.getElementById(`pub-pin${i+1}`).focus();
+  if(e.key==='Backspace'&&i>0&&!e.target.value)document.getElementById(`pub-pin${i-1}`).focus();
+}
+
+async function publicConfirmPickup(unitId,orderId,outletName){
+  const name=document.getElementById('pub-driver-name').value.trim();
+  const vehicle=document.getElementById('pub-driver-vehicle').value.trim().toUpperCase();
+  const company=document.getElementById('pub-driver-company').value.trim();
+  if(!name){alert('Please enter your name.');return;}
+  if(!vehicle){alert('Please enter your vehicle number.');return;}
+
+  const now=new Date().toISOString();
+
+  // Update cake unit
+  await db.from('cake_units').update({
+    scanned_by_driver:true,
+    driver_scan_at:now,
+    rider_name:name,
+    driver_vehicle:vehicle
+  }).eq('id',unitId);
+
+  // Check if all units in order are loaded
+  const{data:allUnits}=await db.from('cake_units').select('*').eq('order_id',orderId);
+  const allLoaded=allUnits?.every(u=>u.id===unitId?true:u.scanned_by_driver);
+
+  if(allLoaded){
+    const bb=new Date();bb.setDate(bb.getDate()+4);
+    await db.from('orders').update({
+      status:'in_transit',
+      picked_up_at:now,
+      best_before_date:bb.toISOString().split('T')[0]
+    }).eq('id',orderId);
+    await db.from('scans').insert({
+      batch_id:orderId,
+      scan_type:'dispatch',
+      scanned_by:`${name} (${vehicle}${company?' · '+company:''})`
+    });
+  }
+
+  // Save session for this order only
+  sessionStorage.setItem('pub_driver_order_'+orderId,JSON.stringify({name,vehicle,company}));
+
+  // Reload page to show updated status
+  loadPublicScanPage(unitId);
+}
+
+async function publicConfirmDelivery(unitId,orderId,correctOutletCode,correctPin,pinRequired){
+  const enteredCode=document.getElementById('pub-outlet-code').value.trim().toUpperCase();
+  const name=document.getElementById('pub-outlet-name').value.trim();
+  const photoFile=document.getElementById('pub-outlet-photo')?.files[0];
+  const notes=document.getElementById('pub-outlet-notes')?.value.trim();
+
+  if(!enteredCode){alert('Please enter your outlet code.');return;}
+  if(!name){alert('Please enter your name.');return;}
+  if(!photoFile){alert('Please take a photo as proof of receipt.');return;}
+
+  // Verify outlet code
+  if(enteredCode!==correctOutletCode.toUpperCase()){
+    alert(`Incorrect outlet code. This item is not assigned to your outlet.\n\nPlease check your outlet code with your manager.`);
+    return;
+  }
+
+  // Verify PIN if required
+  if(pinRequired){
+    const enteredPin=[0,1,2,3].map(i=>document.getElementById(`pub-pin${i}`)?.value||'').join('');
+    if(enteredPin!==correctPin){
+      document.getElementById('pub-pin-error').style.display='block';
+      return;
+    }
+  }
+
+  // Upload photo
+  let photoUrl=null;
+  const fileName=`pub_${orderId}_${Date.now()}.jpg`;
+  const{error:uploadError}=await db.storage.from('scan-photos').upload(fileName,photoFile);
+  if(!uploadError){
+    const{data:urlData}=db.storage.from('scan-photos').getPublicUrl(fileName);
+    photoUrl=urlData.publicUrl;
+  }
+
+  const now=new Date().toISOString();
+
+  // Update cake unit
+  await db.from('cake_units').update({
+    status:'delivered',
+    scanned_delivered_at:now
+  }).eq('id',unitId);
+
+  // Check if all units delivered
+  const{data:allUnits}=await db.from('cake_units').select('*').eq('order_id',orderId);
+  const allDone=allUnits?.every(u=>u.id===unitId?true:u.status==='delivered');
+  if(allDone){
+    await db.from('orders').update({
+      status:'delivered',
+      delivered_at:now
+    }).eq('id',orderId);
+  }
+
+  // Log scan
+  await db.from('scans').insert({
+    batch_id:orderId,
+    scan_type:'received',
+    scanned_by:name,
+    notes:notes||null,
+    photo_url:photoUrl
+  });
+
+  // Reload to show delivered state
+  loadPublicScanPage(unitId);
+}
+
+// ── OUTLET LOGIN UPDATE ──
+async function verifyOutletLogin(outletId,outletCode,pin,pinRequired){
+  const{data:outlet}=await db.from('outlets').select('*').eq('id',outletId).single();
+  if(!outlet)return false;
+  if(outlet.outlet_code?.toUpperCase()!==outletCode.toUpperCase())return false;
+  if(pinRequired&&outlet.pin&&outlet.pin!==pin)return false;
+  return true;
+}
 // ── UTILS ──
 function showAlert(id,msg,type){const el=document.getElementById(id);if(el)el.innerHTML=`<div class="alert alert-${type}">${msg}</div>`;}
 function formatStatus(s){return{not_ready:'Not Ready',ready:'Ready to Pick Up',in_transit:'In Transit',delivered:'Delivered'}[s]||s;}
@@ -2778,13 +3173,17 @@ window.addEventListener('load',()=>{
   currentMode=saved;applyMode();updateGreeting();
   setInterval(applyMode,60000);
   loadActiveBlasts();
+setTimeout(()=>checkAndShowBroadcast(),800);
   ['auto','day','night'].forEach(m=>{
     const b=document.getElementById('mode-'+m);
     if(b)b.classList.toggle('active',currentMode===m);
   });
   const params=new URLSearchParams(window.location.search);
-  const trackId=params.get('track');
-  if(trackId){
+const trackId=params.get('track');
+const pubScan=params.get('scan');
+if(pubScan){
+  loadPublicScanPage(pubScan);
+}else if(trackId){
     document.getElementById('lobby').style.display='none';
     document.getElementById('main-app').style.display='block';
     document.getElementById('main-nav').style.display='none';
@@ -2798,5 +3197,36 @@ window.addEventListener('load',()=>{
 });
 window.addEventListener('resize',()=>{if(currentRole==='hq'||currentRole==='kitchen')initViews();});
 </script>
+<!-- BROADCAST POPUP -->
+<div id="broadcast-overlay" style="display:none" class="broadcast-overlay" onclick="dismissBroadcastIfOutside(event)">
+  <div class="broadcast-bubble">
+    <div class="broadcast-bubble-hdr">
+      <div class="broadcast-bubble-dot"></div>
+      <div class="broadcast-bubble-title">OPERATIONS BROADCAST</div>
+      <div class="broadcast-bubble-time" id="broadcast-time"></div>
+    </div>
+    <div class="broadcast-bubble-body">
+      <div class="broadcast-bubble-msg" id="broadcast-msg"></div>
+      <div class="broadcast-bubble-sender" id="broadcast-sender"></div>
+      <button class="broadcast-bubble-dismiss" onclick="dismissBroadcast()">Got it</button>
+      <div class="broadcast-bubble-more" id="broadcast-more"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PUBLIC SCAN PAGE -->
+<div id="public-scan-page" style="display:none" class="public-scan-wrap">
+  <div class="public-scan-hdr">
+    <div class="logo-box">DJ</div>
+    <div>
+      <div class="logo-text">DOJO <span>INTERFACE</span></div>
+      <div style="color:#555;font-size:9px;letter-spacing:2px">DELIVERY VERIFICATION</div>
+    </div>
+  </div>
+  <div class="public-scan-body">
+    <div id="public-scan-content"><div class="loader">Loading...</div></div>
+  </div>
+  <div style="text-align:center;padding:20px;color:#aaa;font-size:10px;letter-spacing:1px">POWERED BY DOJO INTERFACE</div>
+</div>
 </body>
 </html>
