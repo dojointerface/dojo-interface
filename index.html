@@ -1696,6 +1696,22 @@ if(!codeField){
 }
     const sel=document.getElementById('login-outlet-select');
     sel.innerHTML='<option value="">— Select outlet —</option>'+(outlets||[]).map(o=>`<option value="${o.id}">${o.name}</option>`).join('');
+    // Dynamically show outlet PIN field when selected outlet requires it
+    sel.onchange=async function(){
+      const oid=sel.value;
+      const pinField=document.getElementById('login-pin-field');
+      pinField.style.display='none';
+      document.getElementById('pin-error').style.display='none';
+      [0,1,2,3].forEach(i=>{const pd=document.getElementById(`pin${i}`);if(pd)pd.value='';});
+      if(!oid)return;
+      const{data:ol}=await db.from('outlets').select('pin_required').eq('id',oid).single();
+      if(ol?.pin_required){
+        const lbl=pinField.querySelector('label');
+        if(lbl)lbl.textContent='Outlet PIN';
+        pinField.style.display='block';
+        setTimeout(()=>document.getElementById('pin0').focus(),200);
+      }
+    };
   }else if(role==='kitchen'){
     document.getElementById('login-title').textContent='Central Kitchen Sign In';
     document.getElementById('login-sub').textContent='Enter your name to continue';
@@ -1730,9 +1746,10 @@ async function submitLogin(){
   if(!name){alert('Please enter your name.');return;}
   // Get outlet details
   const{data:outlet}=await db.from('outlets').select('*').eq('id',outletId).single();
-  // Verify outlet code if outlets have codes
-  if(outlet?.outlet_code&&outletCode&&outlet.outlet_code.toUpperCase()!==outletCode){
-    alert('Incorrect outlet code. Please check with your manager.');return;
+  // Verify outlet code — required when outlet has one configured
+  if(outlet?.outlet_code){
+    if(!outletCode){alert('Please enter your outlet code. Check with your manager.');return;}
+    if(outlet.outlet_code.toUpperCase()!==outletCode){alert('Incorrect outlet code. Please check with your manager.');return;}
   }
   // Verify PIN if required
   if(outlet?.pin_required&&outlet?.pin){
@@ -1743,6 +1760,12 @@ async function submitLogin(){
   }
   currentRole='outlet';currentStaffName=name;
   currentOutletId=outletId;currentOutletName=sel.options[sel.selectedIndex].text;
+  }else{
+    // kitchen / driver — just need a name
+    const name=document.getElementById('login-name-input').value.trim();
+    if(!name){alert('Please enter your name.');return;}
+    currentRole=loginRole;currentStaffName=name;currentOutletId=null;currentOutletName=null;
+  }
   closeLogin();
   enterApp();
 }
@@ -1780,6 +1803,7 @@ function enterApp(){
     setupRealtime();
   }
   loadActiveBlasts();
+  setTimeout(()=>checkAndShowBroadcast(),1000);
 }
 
 function switchRole(){
@@ -1873,9 +1897,10 @@ function scanFrame(type,video){
   ctx.drawImage(video,0,0);
   const img=ctx.getImageData(0,0,canvas.width,canvas.height);
   const code=jsQR(img.data,img.width,img.height);
-  if(code&&code.data.includes('?track=')){
+  if(code&&(code.data.includes('?scan=')||code.data.includes('?track='))){
     try{
-      const unitId=new URL(code.data).searchParams.get('track');
+      const _params=new URL(code.data).searchParams;
+      const unitId=_params.get('scan')||_params.get('track');
       stopCamera(type);
       if(type==='kitchen')markCakeReady(unitId);
       else if(type==='driver')driverScanCake(unitId);
@@ -2458,13 +2483,6 @@ async function editOutlet(id,name,pin,code,pinRequired){
   const p=prompt('Set PIN (leave blank to remove):',pin);
   await db.from('outlets').update({name:n,pin:p||null}).eq('id',id);
   loadAdminOutlets();
-}
-}
-
-async function editOutlet(id,name,pin){
-  const n=prompt('Outlet name:',name);if(!n)return;
-  const p=prompt('Set PIN (leave blank to remove):',pin);
-  await db.from('outlets').update({name:n,pin:p||null}).eq('id',id);loadAdminOutlets();
 }
 
 async function toggleOutlet(id,val){await db.from('outlets').update({is_active:val}).eq('id',id);loadAdminOutlets();}
