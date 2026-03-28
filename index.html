@@ -1685,15 +1685,6 @@ async function openLogin(role){
     document.getElementById('login-outlet-field').style.display='block';
    document.getElementById('login-name-field').style.display='block';
 const{data:outlets}=await db.from('outlets').select('*').eq('is_active',true).order('name');
-// Add outlet code field dynamically
-let codeField=document.getElementById('login-outlet-code-field');
-if(!codeField){
-  codeField=document.createElement('div');
-  codeField.id='login-outlet-code-field';
-  codeField.className='login-field';
-  codeField.innerHTML=`<label>Outlet Code</label><input type="text" id="login-outlet-code-input" placeholder="e.g. OT-001" style="text-transform:uppercase"/>`;
-  document.getElementById('login-name-field').after(codeField);
-}
     const sel=document.getElementById('login-outlet-select');
     sel.innerHTML='<option value="">— Select outlet —</option>'+(outlets||[]).map(o=>`<option value="${o.id}">${o.name}</option>`).join('');
     // Dynamically show outlet PIN field when selected outlet requires it
@@ -1741,16 +1732,10 @@ async function submitLogin(){
   const sel=document.getElementById('login-outlet-select');
   const outletId=sel.value;
   const name=document.getElementById('login-name-input').value.trim();
-  const outletCode=document.getElementById('login-outlet-code-input')?.value.trim().toUpperCase();
   if(!outletId){alert('Please select your outlet.');return;}
   if(!name){alert('Please enter your name.');return;}
   // Get outlet details
   const{data:outlet}=await db.from('outlets').select('*').eq('id',outletId).single();
-  // Verify outlet code — required when outlet has one configured
-  if(outlet?.outlet_code){
-    if(!outletCode){alert('Please enter your outlet code. Check with your manager.');return;}
-    if(outlet.outlet_code.toUpperCase()!==outletCode){alert('Incorrect outlet code. Please check with your manager.');return;}
-  }
   // Verify PIN if required
   if(outlet?.pin_required&&outlet?.pin){
     const enteredPin=[0,1,2,3].map(i=>document.getElementById(`pin${i}`)?.value||'').join('');
