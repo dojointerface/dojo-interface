@@ -442,6 +442,31 @@
 .public-status-line{width:24px;height:2px;background:#f0ede6;margin-top:-20px}
 .public-action-form{padding:16px}
 .public-blocked{background:var(--nr-bg);color:var(--nr-text);padding:16px;border-radius:8px;font-size:13px;font-weight:500;text-align:center;margin:16px}
+    /* ── INGREDIENT BATCHES ── */
+    .ing-tab-row{display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid #e5dfd5}
+    .ing-tab{padding:10px 16px;font-size:12px;font-weight:700;cursor:pointer;color:#aaa;border-bottom:2px solid transparent;margin-bottom:-2px;background:none;border-top:none;border-left:none;border-right:none}
+    .ing-tab.active{color:var(--mustard);border-bottom-color:var(--mustard)}
+    .batch-card{background:var(--white);border-radius:12px;padding:16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+    .batch-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .batch-name{font-weight:700;font-size:14px}
+    .batch-meta{font-size:11px;color:#888;margin-top:2px}
+    .batch-quality{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;flex-shrink:0}
+    .batch-quality.passed{background:#C0DD97;color:#27500A}
+    .batch-quality.flagged{background:#F7C1C1;color:#7B2D2D}
+    .batch-progress-bar{height:8px;background:#f0ece4;border-radius:4px;overflow:hidden;margin:8px 0}
+    .batch-progress-fill{height:100%;background:var(--mustard);border-radius:4px;transition:width .3s}
+    .batch-progress-fill.low{background:#7B2D2D}
+    .batch-weight-row{display:flex;justify-content:space-between;font-size:11px;color:#888;margin-bottom:4px}
+    .batch-weight-row strong{color:var(--charcoal)}
+    .fifo-badge{display:inline-block;background:#185FA5;color:white;font-size:9px;font-weight:800;border-radius:4px;padding:2px 6px;margin-left:6px;vertical-align:middle}
+    .qual-btn-row{display:flex;gap:8px;margin-top:4px}
+    .qual-btn{padding:8px 16px;border-radius:8px;border:1.5px solid #e0ddd5;background:var(--white);color:#888;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+    .qual-btn.active-pass{border-color:#27500A;background:#C0DD97;color:#27500A}
+    .qual-btn.active-flag{border-color:#7B2D2D;background:#F7C1C1;color:#7B2D2D}
+    .usage-form{background:#f8f5f0;border-radius:10px;padding:14px;margin-top:10px}
+    .usage-form label{font-size:11px;font-weight:700;color:#888;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+    .usage-form input{width:100%;padding:8px 10px;border:1.5px solid #e0ddd5;border-radius:8px;font-size:13px;margin-bottom:10px;background:var(--white)}
+    .ing-summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:14px}
   </style>
 </head>
 <body class="day">
@@ -781,6 +806,44 @@
         <div id="blast-list"><div class="loader">Loading...</div></div>
       </div>
 
+      <!-- ══ KITCHEN INGREDIENTS PAGE ══ -->
+      <div id="kitchen-ingredients" class="page">
+        <div class="card">
+          <h2>Log Incoming Batch</h2>
+          <div class="form-group">
+            <label>Ingredient *</label>
+            <input type="text" id="ing-ingredient" placeholder="e.g. Mango, Strawberry, Cream..."/>
+          </div>
+          <div class="form-group">
+            <label>Supplier</label>
+            <input type="text" id="ing-supplier" placeholder="Supplier name (optional)"/>
+          </div>
+          <div class="form-group">
+            <label>Weight Received (kg) *</label>
+            <input type="number" id="ing-weight" placeholder="e.g. 15" step="0.1" min="0.1"/>
+          </div>
+          <div class="form-group">
+            <label>Quality Check *</label>
+            <div class="qual-btn-row">
+              <button class="qual-btn active-pass" id="qual-pass" onclick="setIngQuality('passed')">✓ Passed</button>
+              <button class="qual-btn" id="qual-flag" onclick="setIngQuality('flagged')">⚠ Flag Issue</button>
+            </div>
+          </div>
+          <div class="form-group" id="ing-notes-group" style="display:none">
+            <label>Quality Notes</label>
+            <textarea id="ing-quality-notes" rows="2" placeholder="Describe the issue..." style="width:100%;padding:8px 10px;border:1.5px solid #e0ddd5;border-radius:8px;font-size:13px;resize:vertical"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Photo Proof</label>
+            <input type="file" id="ing-photo" accept="image/*" capture="environment" style="font-size:13px"/>
+          </div>
+          <button class="btn btn-mustard" onclick="logIngredientBatch()" style="margin-top:4px">Log Batch</button>
+          <div id="ing-batch-alert" style="margin-top:8px"></div>
+        </div>
+        <div class="section-label" style="margin-top:16px">Active Batches</div>
+        <div id="kitchen-batches-list"><div class="loader">Loading...</div></div>
+      </div>
+
       <!-- ══ DRIVER PAGES ══ -->
       <div id="driver-ready" class="page">
         <div id="driver-order-list"><div class="loader">Loading...</div></div>
@@ -842,13 +905,27 @@
       </div>
 
       <div id="hq-inventory" class="page">
-        <div class="stat-grid">
-          <div class="stat-card stat-nr"><div class="num" id="inv-units">-</div><div class="lbl">TOTAL UNITS OUT</div></div>
-          <div class="stat-card stat-rd"><div class="num" id="inv-cost">-</div><div class="lbl">TOTAL COST (RM)</div></div>
-          <div class="stat-card stat-tr"><div class="num" id="inv-rev">-</div><div class="lbl">EST. REVENUE (RM)</div></div>
-          <div class="stat-card stat-dl"><div class="num" id="inv-margin">-</div><div class="lbl">EST. MARGIN (RM)</div></div>
+        <div class="ing-tab-row">
+          <button class="ing-tab active" id="inv-tab-ing" onclick="switchInvTab('ingredients',this)">Ingredients</button>
+          <button class="ing-tab" id="inv-tab-rev" onclick="switchInvTab('revenue',this)">Revenue</button>
         </div>
-        <div id="inventory-content"><div class="loader">Loading inventory...</div></div>
+        <div id="inv-ingredients-panel">
+          <div class="ing-summary-grid">
+            <div class="stat-card stat-rd"><div class="num" id="inv-batches">-</div><div class="lbl">ACTIVE BATCHES</div></div>
+            <div class="stat-card stat-tr"><div class="num" id="inv-total-kg">-</div><div class="lbl">TOTAL STOCK</div></div>
+            <div class="stat-card stat-nr"><div class="num" id="inv-fifo-alerts">-</div><div class="lbl">FIFO ALERTS</div></div>
+          </div>
+          <div id="hq-batches-list"><div class="loader">Loading...</div></div>
+        </div>
+        <div id="inv-revenue-panel" style="display:none">
+          <div class="stat-grid">
+            <div class="stat-card stat-nr"><div class="num" id="inv-units">-</div><div class="lbl">TOTAL UNITS OUT</div></div>
+            <div class="stat-card stat-rd"><div class="num" id="inv-cost">-</div><div class="lbl">TOTAL COST (RM)</div></div>
+            <div class="stat-card stat-tr"><div class="num" id="inv-rev">-</div><div class="lbl">EST. REVENUE (RM)</div></div>
+            <div class="stat-card stat-dl"><div class="num" id="inv-margin">-</div><div class="lbl">EST. MARGIN (RM)</div></div>
+          </div>
+          <div id="inventory-content"><div class="loader">Loading inventory...</div></div>
+        </div>
       </div>
 
       <div id="hq-analytics" class="page">
@@ -1662,6 +1739,7 @@ const ROLES={
   kitchen:{label:'KITCHEN',tabs:[
     {id:'kitchen-incoming',label:'Orders',fn:loadKitchenOrders},
     {id:'kitchen-scan',label:'Scan Item',fn:()=>{}},
+    {id:'kitchen-ingredients',label:'Ingredients',fn:loadKitchenIngredients},
     {id:'kitchen-blast',label:'Broadcast',fn:()=>loadBlastList('blast-list')}
   ]},
   driver:{label:'DRIVER',tabs:[
@@ -1809,7 +1887,7 @@ function hqNav(pageId,btn){
   if(btn)btn.classList.add('active');
   stopAllCameras();
   const pageTitles={
-    'hq-orders':'My Orders','hq-board':'Live Board','hq-inventory':'Inventory & Revenue',
+    'hq-orders':'My Orders','hq-board':'Live Board','hq-inventory':'Inventory',
     'hq-analytics':'Analytics','hq-messenger':'Messenger','hq-manager':'Manager','hq-reports':'Reports'
   };
   const el=document.getElementById('hq-page-title');
@@ -1819,7 +1897,7 @@ function hqNav(pageId,btn){
   const fnMap={
     'hq-orders':loadHQOrders,
     'hq-board':()=>{loadHQOrders();},
-    'hq-inventory':loadInventory,
+    'hq-inventory':loadHQInventory,
     'hq-analytics':loadAnalytics,
     'hq-messenger':()=>{loadMessengerOutletList();loadBlastList('admin-blast-list-inner');},
     'hq-manager':loadManager,
@@ -3169,6 +3247,156 @@ function showAlert(id,msg,type){const el=document.getElementById(id);if(el)el.in
 function formatStatus(s){return{not_ready:'Not Ready',ready:'Ready to Pick Up',in_transit:'In Transit',delivered:'Delivered'}[s]||s;}
 function formatDate(d){if(!d)return'—';return new Date(d).toLocaleString('en-MY',{dateStyle:'short',timeStyle:'short'});}
 function formatDateOnly(d){if(!d)return'—';return new Date(d).toLocaleDateString('en-MY',{dateStyle:'medium'});}
+
+// ── INGREDIENT BATCHES ──
+let currentIngQuality='passed';
+
+function setIngQuality(val){
+  currentIngQuality=val;
+  const passBtn=document.getElementById('qual-pass');
+  const flagBtn=document.getElementById('qual-flag');
+  if(passBtn)passBtn.className='qual-btn'+(val==='passed'?' active-pass':'');
+  if(flagBtn)flagBtn.className='qual-btn'+(val==='flagged'?' active-flag':'');
+  const notesGroup=document.getElementById('ing-notes-group');
+  if(notesGroup)notesGroup.style.display=val==='flagged'?'block':'none';
+}
+
+async function logIngredientBatch(){
+  const ingredient=document.getElementById('ing-ingredient')?.value?.trim();
+  const supplier=document.getElementById('ing-supplier')?.value?.trim();
+  const weight=parseFloat(document.getElementById('ing-weight')?.value);
+  const notes=document.getElementById('ing-quality-notes')?.value?.trim();
+  const photoFile=document.getElementById('ing-photo')?.files?.[0];
+  if(!ingredient){showAlert('ing-batch-alert','Please enter an ingredient name.','error');return;}
+  if(!weight||weight<=0){showAlert('ing-batch-alert','Please enter a valid weight.','error');return;}
+  showAlert('ing-batch-alert','Saving batch...','info');
+  let photoUrl=null;
+  if(photoFile){
+    const fileName=`ingredients/${Date.now()}_${photoFile.name}`;
+    const{error:uploadError}=await db.storage.from('scan-photos').upload(fileName,photoFile);
+    if(!uploadError){const{data:urlData}=db.storage.from('scan-photos').getPublicUrl(fileName);photoUrl=urlData.publicUrl;}
+  }
+  const{error}=await db.from('ingredient_batches').insert({
+    ingredient,supplier:supplier||null,weight_kg:weight,remaining_kg:weight,
+    quality_status:currentIngQuality,quality_notes:notes||null,
+    photo_url:photoUrl,created_by:currentStaffName||'Kitchen',is_active:true
+  });
+  if(error){showAlert('ing-batch-alert','Failed to save. Try again.','error');return;}
+  showAlert('ing-batch-alert','Batch logged!','success');
+  ['ing-ingredient','ing-supplier','ing-weight','ing-quality-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('ing-photo').value='';
+  setIngQuality('passed');
+  loadKitchenIngredients();
+}
+
+async function loadKitchenIngredients(){
+  const container=document.getElementById('kitchen-batches-list');
+  if(!container)return;
+  container.innerHTML='<div class="loader">Loading batches...</div>';
+  const{data:batches,error}=await db.from('ingredient_batches').select('*').eq('is_active',true).order('arrived_at',{ascending:true});
+  if(error||!batches||batches.length===0){container.innerHTML='<div class="empty">No active batches. Log one above.</div>';return;}
+  const byIng={};
+  batches.forEach(b=>{(byIng[b.ingredient]=byIng[b.ingredient]||[]).push(b);});
+  container.innerHTML=batches.map(b=>{
+    const pct=Math.round((b.remaining_kg/b.weight_kg)*100);
+    const isLow=pct<=25;
+    const hasFifo=(byIng[b.ingredient]||[]).length>1;
+    const isOldest=hasFifo&&byIng[b.ingredient][0].id===b.id;
+    return`<div class="batch-card">
+      <div class="batch-card-header">
+        <div>
+          <div class="batch-name">${b.ingredient}${isOldest?'<span class="fifo-badge">USE FIRST</span>':''}</div>
+          <div class="batch-meta">Arrived ${formatDate(b.arrived_at)}${b.supplier?' · '+b.supplier:''}</div>
+        </div>
+        <span class="batch-quality ${b.quality_status}">${b.quality_status==='passed'?'✓ Passed':'⚠ Flagged'}</span>
+      </div>
+      ${b.quality_notes?`<div style="font-size:11px;color:#7B2D2D;margin-bottom:8px">⚠ ${b.quality_notes}</div>`:''}
+      <div class="batch-weight-row">
+        <span>Original: <strong>${b.weight_kg}kg</strong></span>
+        <span>Used: <strong>${(b.weight_kg-b.remaining_kg).toFixed(1)}kg</strong></span>
+        <span>Remaining: <strong style="color:${isLow?'#7B2D2D':'inherit'}">${b.remaining_kg}kg</strong></span>
+      </div>
+      <div class="batch-progress-bar"><div class="batch-progress-fill${isLow?' low':''}" style="width:${pct}%"></div></div>
+      <div id="usage-form-${b.id}" style="display:none" class="usage-form">
+        <label>Used For</label>
+        <input type="text" id="uf-product-${b.id}" placeholder="e.g. Mango Pavlova"/>
+        <label>Weight Used (kg)</label>
+        <input type="number" id="uf-weight-${b.id}" placeholder="e.g. 3.5" step="0.1" min="0.1" max="${b.remaining_kg}"/>
+        <div id="uf-alert-${b.id}"></div>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button class="btn btn-mustard" onclick="submitUsage('${b.id}',${b.remaining_kg})">Save</button>
+          <button class="btn" onclick="document.getElementById('usage-form-${b.id}').style.display='none'">Cancel</button>
+        </div>
+      </div>
+      <button class="btn btn-mustard" style="margin-top:8px;font-size:11px" onclick="document.getElementById('usage-form-${b.id}').style.display='block'">+ Log Usage</button>
+    </div>`;
+  }).join('');
+}
+
+async function submitUsage(batchId,remainingKg){
+  const product=document.getElementById(`uf-product-${batchId}`)?.value?.trim();
+  const weightUsed=parseFloat(document.getElementById(`uf-weight-${batchId}`)?.value);
+  if(!product){showAlert(`uf-alert-${batchId}`,'Enter product name.','error');return;}
+  if(!weightUsed||weightUsed<=0){showAlert(`uf-alert-${batchId}`,'Enter valid weight.','error');return;}
+  if(weightUsed>remainingKg){showAlert(`uf-alert-${batchId}`,'Exceeds remaining stock.','error');return;}
+  showAlert(`uf-alert-${batchId}`,'Saving...','info');
+  const newRemaining=Math.round((remainingKg-weightUsed)*100)/100;
+  const{error}=await db.from('batch_usage').insert({batch_id:batchId,used_for:product,weight_used_kg:weightUsed,logged_by:currentStaffName||'Kitchen'});
+  if(error){showAlert(`uf-alert-${batchId}`,'Failed. Try again.','error');return;}
+  await db.from('ingredient_batches').update({remaining_kg:newRemaining<=0?0:newRemaining,is_active:newRemaining>0}).eq('id',batchId);
+  loadKitchenIngredients();
+}
+
+function switchInvTab(tab,btn){
+  document.querySelectorAll('.ing-tab').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  document.getElementById('inv-ingredients-panel').style.display=tab==='ingredients'?'block':'none';
+  document.getElementById('inv-revenue-panel').style.display=tab==='revenue'?'block':'none';
+  if(tab==='ingredients')loadHQIngredients();
+  else loadInventory();
+}
+
+async function loadHQInventory(){
+  switchInvTab('ingredients',document.getElementById('inv-tab-ing'));
+}
+
+async function loadHQIngredients(){
+  const container=document.getElementById('hq-batches-list');
+  if(!container)return;
+  container.innerHTML='<div class="loader">Loading...</div>';
+  const{data:batches,error}=await db.from('ingredient_batches').select('*').eq('is_active',true).order('arrived_at',{ascending:true});
+  const active=batches||[];
+  const totalKg=active.reduce((sum,b)=>sum+b.remaining_kg,0);
+  const byIng={};active.forEach(b=>{(byIng[b.ingredient]=byIng[b.ingredient]||[]).push(b);});
+  const fifoCount=Object.values(byIng).filter(arr=>arr.length>1).length;
+  const bEl=document.getElementById('inv-batches');const kEl=document.getElementById('inv-total-kg');const fEl=document.getElementById('inv-fifo-alerts');
+  if(bEl)bEl.textContent=active.length;
+  if(kEl)kEl.textContent=totalKg.toFixed(1)+'kg';
+  if(fEl)fEl.textContent=fifoCount;
+  if(error||active.length===0){container.innerHTML='<div class="empty">No active ingredient batches.</div>';return;}
+  container.innerHTML=active.map(b=>{
+    const pct=Math.round((b.remaining_kg/b.weight_kg)*100);
+    const isLow=pct<=25;
+    const hasFifo=(byIng[b.ingredient]||[]).length>1;
+    const isOldest=hasFifo&&byIng[b.ingredient][0].id===b.id;
+    return`<div class="batch-card">
+      <div class="batch-card-header">
+        <div>
+          <div class="batch-name">${b.ingredient}${isOldest?'<span class="fifo-badge">USE FIRST</span>':''}</div>
+          <div class="batch-meta">Arrived ${formatDate(b.arrived_at)}${b.supplier?' · '+b.supplier:''} · ${b.created_by||'Kitchen'}</div>
+        </div>
+        <span class="batch-quality ${b.quality_status}">${b.quality_status==='passed'?'✓ Passed':'⚠ Flagged'}</span>
+      </div>
+      ${b.quality_notes?`<div style="font-size:11px;color:#7B2D2D;margin-bottom:8px">⚠ ${b.quality_notes}</div>`:''}
+      <div class="batch-weight-row">
+        <span>Original: <strong>${b.weight_kg}kg</strong></span>
+        <span>Used: <strong>${(b.weight_kg-b.remaining_kg).toFixed(1)}kg</strong></span>
+        <span>Remaining: <strong style="color:${isLow?'#7B2D2D':'inherit'}">${b.remaining_kg}kg</strong></span>
+      </div>
+      <div class="batch-progress-bar"><div class="batch-progress-fill${isLow?' low':''}" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+}
 
 // ── INIT ──
 window.addEventListener('load',()=>{
