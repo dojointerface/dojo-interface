@@ -7,6 +7,12 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#2C2A25">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="DOJO Interface">
   <style>
     :root{
       --charcoal:#2C2A25;--mustard:#EF9F27;--canvas:#F5F0E8;--white:#fff;
@@ -442,6 +448,106 @@
 .public-status-line{width:24px;height:2px;background:#f0ede6;margin-top:-20px}
 .public-action-form{padding:16px}
 .public-blocked{background:var(--nr-bg);color:var(--nr-text);padding:16px;border-radius:8px;font-size:13px;font-weight:500;text-align:center;margin:16px}
+    /* ── CAT CHIPS ── */
+    .cat-chip{padding:6px 14px;border-radius:20px;border:1.5px solid #e0ddd5;background:white;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;color:#888;transition:all .15s;flex-shrink:0}
+    .cat-chip.active{background:#EF9F27;border-color:#EF9F27;color:#2C2A25}
+    /* ── RECIPES ── */
+    .recipe-item{background:var(--white);border-radius:12px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);overflow:hidden}
+    .recipe-item.open{box-shadow:0 4px 16px rgba(0,0,0,.1)}
+    .recipe-header{display:flex;gap:12px;padding:14px;align-items:center;cursor:pointer;user-select:none}
+    .recipe-thumb-ph{width:52px;height:52px;border-radius:10px;background:linear-gradient(135deg,#f0ece4,#e5dfd5);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+    .recipe-rinfo{flex:1;min-width:0}
+    .recipe-rname{font-weight:700;font-size:14px;margin-bottom:2px}
+    .recipe-rmeta{font-size:11px;color:#888;margin-bottom:5px}
+    .recipe-rchips{display:flex;gap:4px;flex-wrap:wrap}
+    .rchip{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:.3px}
+    .rc-pastry{background:#FAEEDA;color:#a05e00}.rc-cake{background:#dbeafe;color:#1e40af}
+    .rc-mousse{background:#fce7f3;color:#9d174d}.rc-roulade{background:#C0DD97;color:#27500A}
+    .rc-other{background:#f0ece4;color:#888}.rc-allergen{background:#f0ece4;color:#888}
+    .rc-locked{background:#F7C1C1;color:#7B2D2D}.rc-nameonly{background:#FAEEDA;color:#a05e00}
+    .recipe-rright{text-align:right;flex-shrink:0}
+    .recipe-rcost{font-size:14px;font-weight:800;color:#EF9F27}
+    .recipe-rcost-lbl{font-size:9px;color:#bbb}
+    .rchevron{font-size:11px;color:#bbb;margin-top:6px;transition:transform .25s;display:block;text-align:right}
+    .recipe-item.open .rchevron{transform:rotate(180deg)}
+    .recipe-rbody{max-height:0;overflow:hidden;transition:max-height .35s cubic-bezier(.4,0,.2,1)}
+    .recipe-item.open .recipe-rbody{max-height:800px}
+    .recipe-rbody-inner{padding:0 14px 16px}
+    .recipe-rdivider{height:1px;background:#f0ece4;margin-bottom:12px}
+    .recipe-rdesc{font-size:12px;color:#888;margin-bottom:12px;line-height:1.6}
+    .ing-tbl-hdr{display:grid;grid-template-columns:1fr auto auto;gap:8px;font-size:9px;font-weight:700;color:#bbb;text-transform:uppercase;letter-spacing:.8px;padding:0 2px;margin-bottom:6px}
+    .ing-tbl-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;padding:8px 10px;border-radius:8px;font-size:12px;align-items:center}
+    .ing-tbl-row:nth-child(odd){background:#f8f5f0}
+    .ing-tbl-qty{font-weight:700;color:#EF9F27;text-align:right}
+    .ing-tbl-unit{color:#aaa;font-size:10px;text-align:right;min-width:24px}
+    .recipe-rfooter{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid #f0ece4;flex-wrap:wrap;gap:8px}
+    .visibility-select{padding:5px 10px;border-radius:8px;border:1.5px solid #e0ddd5;font-size:11px;font-weight:700;color:#2C2A25;background:white;cursor:pointer;outline:none}
+    .recipe-action-btns{display:flex;gap:6px}
+    .rbtn-edit{background:#f0ece4;border:none;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;color:#2C2A25}
+    .rbtn-delete{background:#F7C1C1;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;color:#7B2D2D}
+    /* recipe modal */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;display:none;align-items:flex-end;justify-content:center}
+    .modal-overlay.open{display:flex}
+    .modal-sheet{background:white;border-radius:20px 20px 0 0;padding:24px 20px;width:100%;max-height:90vh;overflow-y:auto;max-width:600px}
+    .modal-title{font-size:16px;font-weight:800;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+    .modal-close{background:#f0ece4;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+    .modal-label{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;margin-top:12px}
+    .modal-input{width:100%;padding:9px 12px;border:1.5px solid #e0ddd5;border-radius:10px;font-size:13px;outline:none;color:#2C2A25;background:white}
+    .modal-input:focus{border-color:#EF9F27}
+    .modal-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .ing-add-row{display:grid;grid-template-columns:1fr 80px 70px auto;gap:6px;margin-bottom:6px;align-items:center}
+    .ing-add-row input{padding:7px 10px;border:1.5px solid #e0ddd5;border-radius:8px;font-size:12px;outline:none}
+    .ing-add-row input:focus{border-color:#EF9F27}
+    .ing-remove-btn{background:#F7C1C1;border:none;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:14px;color:#7B2D2D;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    /* ── ANALYTICS CHARTS ── */
+    .analytics-tabs{display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid #e5dfd5}
+    .analytics-tab{padding:10px 16px;font-size:12px;font-weight:700;cursor:pointer;color:#aaa;border-bottom:2px solid transparent;margin-bottom:-2px;background:none;border-top:none;border-left:none;border-right:none}
+    .analytics-tab.active{color:var(--mustard);border-bottom-color:var(--mustard)}
+    .chart-card{background:white;border-radius:14px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:14px}
+    .chart-card-title{font-size:13px;font-weight:700;margin-bottom:3px}
+    .chart-card-sub{font-size:11px;color:#aaa;margin-bottom:14px}
+    .chart-donut-wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+    .chart-donut-canvas{position:relative;width:150px;height:150px;flex-shrink:0;margin:0 auto}
+    .chart-legend{flex:1;min-width:140px}
+    .chart-legend-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f8f5f0}
+    .chart-legend-row:last-child{border-bottom:none}
+    .chart-legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;margin-right:8px}
+    .chart-legend-name{font-size:12px;font-weight:600;flex:1}
+    .chart-legend-val{font-size:12px;font-weight:700}
+    .chart-legend-pct{font-size:10px;color:#aaa;margin-left:4px}
+    .wastage-summary-row{display:flex;align-items:center;padding:9px 0;border-bottom:1px solid #f8f5f0}
+    .wastage-summary-row:last-child{border-bottom:none}
+    .ws-info{flex:1}.ws-name{font-size:13px;font-weight:600}.ws-detail{font-size:11px;color:#888;margin-top:1px}
+    .ws-pct{font-size:16px;font-weight:800;min-width:48px;text-align:right}
+    .ws-good{color:#27500A}.ws-warn{color:#EF9F27}.ws-bad{color:#7B2D2D}
+    /* ── WIDGET DASHBOARD ── */
+    .dash-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+    .dash-toolbar-title{font-size:13px;font-weight:700}
+    .dash-customize-btn{background:#f0ece4;border:none;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;color:#2C2A25}
+    .widget-grid{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start}
+    .widget{background:white;border-radius:14px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);position:relative;cursor:grab;transition:opacity .2s,box-shadow .2s;user-select:none;width:calc(50% - 6px);min-width:200px;min-height:110px;overflow:auto;resize:both;flex-shrink:0;flex-grow:0;box-sizing:border-box}
+    .widget:active{cursor:grabbing}
+    .widget.dragging{opacity:.4;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+    .widget.drag-over{box-shadow:0 0 0 2px #EF9F27}
+    .widget.hidden-widget{display:none}
+    .widget-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+    .widget-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#aaa}
+    .widget-hide-btn{background:none;border:none;cursor:pointer;color:#ccc;font-size:14px;padding:0;line-height:1}
+    .widget-hide-btn:hover{color:#888}
+    .widget-value{font-size:28px;font-weight:800;line-height:1;margin-bottom:4px;cursor:pointer}
+    .widget-value:hover{text-decoration:underline;opacity:0.8}
+    .widget-sub{font-size:11px;color:#aaa}
+    .widget-list{margin-top:8px}
+    .widget-list-row{display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid #f8f5f0}
+    .widget-list-row:last-child{border-bottom:none}
+    .widget-list-label{color:#666;font-weight:500}
+    .widget-list-val{font-weight:700}
+    .widget-full{width:100%;flex-basis:100%}
+    .widget-accent-mustard .widget-value{color:#EF9F27}
+    .widget-accent-green .widget-value{color:#27500A}
+    .widget-accent-red .widget-value{color:#7B2D2D}
+    .widget-accent-blue .widget-value{color:#185FA5}
+    .widget-link-hint{font-size:9px;color:#ccc;margin-top:4px;letter-spacing:0.3px}
     /* ── INGREDIENT BATCHES ── */
     .ing-tab-row{display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid #e5dfd5}
     .ing-tab{padding:10px 16px;font-size:12px;font-weight:700;cursor:pointer;color:#aaa;border-bottom:2px solid transparent;margin-bottom:-2px;background:none;border-top:none;border-left:none;border-right:none}
@@ -467,6 +573,18 @@
     .usage-form label{font-size:11px;font-weight:700;color:#888;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
     .usage-form input{width:100%;padding:8px 10px;border:1.5px solid #e0ddd5;border-radius:8px;font-size:13px;margin-bottom:10px;background:var(--white)}
     .ing-summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:14px}
+    /* ── DUE DATE ── */
+    .due-date-row{display:flex;align-items:center;gap:8px;background:#fff8ee;border:1.5px solid #EF9F27;border-radius:10px;padding:10px 14px;margin-bottom:12px}
+    .due-date-row svg{flex-shrink:0}
+    .due-date-row input[type=date]{border:none;background:transparent;font-size:13px;font-weight:600;color:var(--charcoal);outline:none;flex:1}
+    .due-badge{display:inline-block;background:#fff8ee;color:#633806;border:1px solid #EF9F27;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px;vertical-align:middle}
+    .overdue-badge{background:#F7C1C1;color:#7B2D2D;border-color:#7B2D2D}
+    /* ── COMPANY BRANDING ── */
+    .brand-logo-box{background:var(--charcoal);border-radius:14px;padding:18px 24px;display:flex;align-items:center;gap:14px;margin-bottom:12px}
+    .brand-logo-icon{width:44px;height:44px;background:var(--mustard);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:var(--charcoal);flex-shrink:0}
+    .brand-logo-name{font-size:20px;font-weight:800;color:#fff;letter-spacing:.5px}
+    .brand-logo-tag{font-size:10px;color:#aaa;letter-spacing:2px;margin-top:2px}
+    .powered-tag{font-size:9px;color:#aaa;text-align:center;margin-top:6px;letter-spacing:1px}
   </style>
 </head>
 <body class="day">
@@ -606,7 +724,7 @@
         </div>
         <div class="sidebar-item" onclick="hqNav('hq-analytics',this)" id="sb-analytics">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="#666"><path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/></svg>
-          <span class="sidebar-item-label">Analytics</span>
+          <span class="sidebar-item-label">Delivery Analytics</span>
         </div>
         <div class="sidebar-item" onclick="hqNav('hq-messenger',this)" id="sb-messenger">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="#666"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
@@ -616,6 +734,10 @@
         <div class="sidebar-item" onclick="hqNav('hq-manager',this)" id="sb-manager">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="#666"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
           <span class="sidebar-item-label">Manager</span>
+        </div>
+        <div class="sidebar-item" onclick="hqNav('hq-recipes',this)" id="sb-recipes">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#666"><path d="M18.06 22.99h1.66c.84 0 1.53-.64 1.63-1.46L23 5.05h-5V1h-1.97v4.05h-4.97l.3 2.34c1.71.47 3.31 1.32 4.27 2.26 1.44 1.42 2.43 2.89 2.43 5.29v8.05zM1 21.99V21h15.03v.99c0 .55-.45 1-1.01 1H2.01c-.56 0-1.01-.45-1.01-1zm15.03-7c0-4.5-6.67-5-8.76-5s-8.77.5-8.77 5c0 2.5 0 5 0 5h17.53s0-2.5 0-5zM3 11l.5-2h9l.5 2H3z"/></svg>
+          <span class="sidebar-item-label">Recipes</span>
         </div>
         <div class="sidebar-item" onclick="hqNav('hq-reports',this)" id="sb-reports">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="#666"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
@@ -692,6 +814,11 @@
           <div id="order-blockout-warning" style="display:none" class="alert alert-error"></div>
           <label>Select Items</label>
           <div id="menu-items-qty"></div>
+          <label>Due Date <span style="font-size:10px;color:#888;font-weight:400">— when does this need to arrive?</span></label>
+          <div class="due-date-row">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#EF9F27"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
+            <input type="date" id="order-due-date"/>
+          </div>
           <label>Notes (optional)</label>
           <input type="text" id="order-notes" placeholder="e.g. Handle with care"/>
           <button class="btn btn-primary" id="place-order-btn" onclick="placeOrder()">Place Order</button>
@@ -844,6 +971,16 @@
         <div id="kitchen-batches-list"><div class="loader">Loading...</div></div>
       </div>
 
+      <!-- ══ KITCHEN RECIPES PAGE ══ -->
+      <div id="kitchen-recipes" class="page">
+        <div style="font-size:12px;color:#888;margin-bottom:14px">Recipes shared by HQ. Tap to see ingredients.</div>
+        <div style="display:flex;align-items:center;gap:8px;background:white;border-radius:12px;padding:10px 14px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+          <span style="color:#bbb">🔍</span>
+          <input type="text" placeholder="Search recipes..." style="flex:1;border:none;outline:none;font-size:13px;background:none" oninput="filterKitchenRecipes(this.value)"/>
+        </div>
+        <div id="kitchen-recipe-list"><div class="loader">Loading recipes...</div></div>
+      </div>
+
       <!-- ══ DRIVER PAGES ══ -->
       <div id="driver-ready" class="page">
         <div id="driver-order-list"><div class="loader">Loading...</div></div>
@@ -907,15 +1044,23 @@
       <div id="hq-inventory" class="page">
         <div class="ing-tab-row">
           <button class="ing-tab active" id="inv-tab-ing" onclick="switchInvTab('ingredients',this)">Ingredients</button>
+          <button class="ing-tab" id="inv-tab-analytics" onclick="switchInvTab('analytics',this)">Analytics</button>
           <button class="ing-tab" id="inv-tab-rev" onclick="switchInvTab('revenue',this)">Revenue</button>
         </div>
         <div id="inv-ingredients-panel">
           <div class="ing-summary-grid">
-            <div class="stat-card stat-rd"><div class="num" id="inv-batches">-</div><div class="lbl">ACTIVE BATCHES</div></div>
-            <div class="stat-card stat-tr"><div class="num" id="inv-total-kg">-</div><div class="lbl">TOTAL STOCK</div></div>
-            <div class="stat-card stat-nr"><div class="num" id="inv-fifo-alerts">-</div><div class="lbl">FIFO ALERTS</div></div>
+            <div class="stat-card stat-rd" style="cursor:pointer" onclick="document.getElementById('hq-batches-list').scrollIntoView({behavior:'smooth'})" title="View all batches"><div class="num" id="inv-batches">-</div><div class="lbl">ACTIVE BATCHES</div></div>
+            <div class="stat-card stat-tr"><div class="num" id="inv-total-kg">-</div><div class="lbl">TOTAL STOCK (KG)</div></div>
+            <div class="stat-card stat-nr" style="cursor:pointer" onclick="scrollToFifo()" title="View FIFO alerts"><div class="num" id="inv-fifo-alerts">-</div><div class="lbl">FIFO ALERTS ↓</div></div>
           </div>
           <div id="hq-batches-list"><div class="loader">Loading...</div></div>
+        </div>
+        <div id="inv-analytics-panel" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+            <div style="font-size:11px;color:#aaa">Drag to reorder · Pull corner to resize · Click values to navigate</div>
+            <button class="btn btn-sm" onclick="resetDashboard()" style="background:#f0ede6;color:#888;border:none;font-size:11px">↺ Reset Layout</button>
+          </div>
+          <div class="widget-grid" id="widget-grid"></div>
         </div>
         <div id="inv-revenue-panel" style="display:none">
           <div class="stat-grid">
@@ -974,6 +1119,42 @@
       </div>
 
       <div id="hq-manager" class="page">
+        <div class="brand-logo-box">
+          <div class="brand-logo-icon">D</div>
+          <div>
+            <div class="brand-logo-name">Dolce Café</div>
+            <div class="brand-logo-tag">CENTRAL KITCHEN OPS</div>
+          </div>
+        </div>
+        <div class="powered-tag">POWERED BY DOJO INTERFACE</div>
+        <div style="height:16px"></div>
+
+        <!-- PLAN TOGGLE -->
+        <div style="background:var(--white);border-radius:14px;padding:16px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+          <div style="font-size:11px;font-weight:700;color:#aaa;letter-spacing:1px;margin-bottom:12px">SUBSCRIPTION PLAN</div>
+          <div style="display:flex;gap:8px">
+            <button id="plan-basic-btn" onclick="setPlan('basic')" style="flex:1;padding:12px;border-radius:10px;border:2px solid #e0ddd5;background:#f8f5f0;font-size:12px;font-weight:700;color:#888;cursor:pointer">
+              <div style="font-size:16px;margin-bottom:4px">🟤</div>
+              Basic
+              <div style="font-size:10px;font-weight:400;margin-top:2px">Delivery tracking only</div>
+            </button>
+            <button id="plan-plus-btn" onclick="setPlan('plus')" style="flex:1;padding:12px;border-radius:10px;border:2px solid #e0ddd5;background:#f8f5f0;font-size:12px;font-weight:700;color:#888;cursor:pointer">
+              <div style="font-size:16px;margin-bottom:4px">⚡</div>
+              Plus
+              <div style="font-size:10px;font-weight:400;margin-top:2px">+ Inventory, Recipes, Analytics</div>
+            </button>
+          </div>
+          <div id="plan-status" style="font-size:11px;color:#888;margin-top:10px;text-align:center"></div>
+        </div>
+        <div style="background:#FAEEDA;border-radius:12px;padding:16px;margin-bottom:20px;border-left:4px solid #EF9F27">
+          <div style="font-size:13px;font-weight:700;margin-bottom:6px">🧪 Demo Data</div>
+          <div style="font-size:11px;color:#888;margin-bottom:12px">Load a full set of demo orders, ingredients, recipes and analytics — all linked together. Great for testing or showing clients.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-mustard" onclick="seedDemoData()" style="font-size:12px">Load Demo Data</button>
+            <button class="btn" onclick="clearDemoData()" style="font-size:12px;background:#F7C1C1;color:#7B2D2D;border:none">Clear Demo Data</button>
+          </div>
+          <div id="seed-alert" style="margin-top:10px"></div>
+        </div>
         <div class="add-form">
           <h2 style="margin-bottom:10px">Add Outlet</h2>
           <label>Name</label><input type="text" id="new-outlet-name" placeholder="e.g. Pavilion KL"/>
@@ -1025,7 +1206,46 @@
         <div id="blockout-list"><div class="loader">Loading...</div></div>
       </div>
 
+      <!-- ══ RECIPES PAGE ══ -->
+      <div id="hq-recipes" class="page">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+          <div style="font-size:11px;color:#aaa">Tap a recipe to see ingredients</div>
+          <button class="btn btn-mustard" style="font-size:12px" onclick="openRecipeModal()">+ Add Recipe</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;background:white;border-radius:12px;padding:10px 14px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+          <span style="color:#bbb">🔍</span>
+          <input type="text" placeholder="Search recipes..." style="flex:1;border:none;outline:none;font-size:13px;background:none;color:#2C2A25" oninput="filterHQRecipes(this.value)"/>
+        </div>
+        <div style="display:flex;gap:6px;overflow-x:auto;margin-bottom:14px;padding-bottom:2px" id="recipe-cat-row">
+          <button class="cat-chip active" onclick="setRecipeCat('all',this)">All</button>
+          <button class="cat-chip" onclick="setRecipeCat('cake',this)">Cakes</button>
+          <button class="cat-chip" onclick="setRecipeCat('pastry',this)">Pastry</button>
+          <button class="cat-chip" onclick="setRecipeCat('mousse',this)">Mousse</button>
+          <button class="cat-chip" onclick="setRecipeCat('roulade',this)">Roulade</button>
+          <button class="cat-chip" onclick="setRecipeCat('other',this)">Other</button>
+        </div>
+        <div id="hq-recipe-list"><div class="loader">Loading recipes...</div></div>
+      </div>
+
+      <!-- ══ DASHBOARD PAGE (redirects to Inventory > Analytics) ══ -->
+      <div id="hq-dashboard" class="page">
+        <div style="text-align:center;padding:40px 20px;color:#aaa">
+          <div style="font-size:32px;margin-bottom:12px">📊</div>
+          <div style="font-size:14px;font-weight:600;color:#666;margin-bottom:6px">Dashboard moved</div>
+          <div style="font-size:12px;margin-bottom:16px">The analytics dashboard is now inside Inventory → Analytics tab.</div>
+          <button class="btn btn-mustard btn-sm" onclick="hqNav('hq-inventory',document.getElementById('sb-inventory'));setTimeout(()=>switchInvTab('analytics',document.getElementById('inv-tab-analytics')),100)">Go to Analytics →</button>
+        </div>
+      </div>
+
       <div id="hq-reports" class="page">
+        <div class="analytics-tabs">
+          <button class="analytics-tab active" id="rep-tab-charts" onclick="switchReportTab('charts',this)">📊 Analytics</button>
+          <button class="analytics-tab" id="rep-tab-downloads" onclick="switchReportTab('downloads',this)">⬇ Downloads</button>
+        </div>
+        <div id="rep-charts-panel">
+          <div id="rep-charts-content"><div class="loader">Loading analytics...</div></div>
+        </div>
+        <div id="rep-downloads-panel" style="display:none">
         <div class="alert alert-info" style="margin-bottom:16px;font-size:12px">Reports are generated from your Analytics and Inventory data. Select a report type and download.</div>
         <div class="section-label">Available Reports</div>
         <div class="report-card">
@@ -1077,6 +1297,68 @@
             <button class="btn btn-sm btn-primary" onclick="downloadReport('messages','pdf')">PDF</button>
             <button class="btn btn-sm btn-mustard" onclick="downloadReport('messages','csv')">Excel</button>
           </div>
+        </div>
+        </div><!-- end rep-downloads-panel -->
+      </div>
+
+      <!-- RECIPE MODAL -->
+      <div class="modal-overlay" id="recipe-modal">
+        <div class="modal-sheet">
+          <div class="modal-title">
+            <span id="recipe-modal-title">Add Recipe</span>
+            <button class="modal-close" onclick="closeRecipeModal()">×</button>
+          </div>
+          <input type="hidden" id="editing-recipe-id"/>
+          <label class="modal-label">Recipe Name *</label>
+          <input class="modal-input" type="text" id="rm-name" placeholder="e.g. Mango Pavlova"/>
+          <div class="modal-row">
+            <div>
+              <label class="modal-label">Category</label>
+              <select class="modal-input" id="rm-category">
+                <option value="cake">Cake</option>
+                <option value="pastry">Pastry</option>
+                <option value="mousse">Mousse</option>
+                <option value="roulade">Roulade</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label class="modal-label">Visibility</label>
+              <select class="modal-input" id="rm-visibility">
+                <option value="kitchen">🔓 Kitchen can see</option>
+                <option value="hq_only">🔒 HQ only</option>
+                <option value="name_only">👁 Name only</option>
+              </select>
+            </div>
+          </div>
+          <label class="modal-label">Description</label>
+          <input class="modal-input" type="text" id="rm-desc" placeholder="Short description..."/>
+          <div class="modal-row">
+            <div>
+              <label class="modal-label">Yield Qty</label>
+              <input class="modal-input" type="number" id="rm-yield-qty" placeholder="e.g. 12" min="1"/>
+            </div>
+            <div>
+              <label class="modal-label">Yield Unit</label>
+              <input class="modal-input" type="text" id="rm-yield-unit" placeholder="e.g. portions"/>
+            </div>
+          </div>
+          <div class="modal-row">
+            <div>
+              <label class="modal-label">Cost per Unit (RM)</label>
+              <input class="modal-input" type="number" id="rm-cost" placeholder="e.g. 8.50" step="0.01" min="0"/>
+            </div>
+            <div>
+              <label class="modal-label">Allergens</label>
+              <input class="modal-input" type="text" id="rm-allergens" placeholder="e.g. Eggs, Dairy"/>
+            </div>
+          </div>
+          <label class="modal-label" style="margin-top:14px">Ingredients</label>
+          <div style="font-size:10px;color:#aaa;margin-bottom:8px">Name · Quantity · Unit</div>
+          <div id="rm-ingredients-list"></div>
+          <button class="btn" style="font-size:11px;margin-top:6px;margin-bottom:4px" onclick="addIngredientRow()">+ Add Ingredient</button>
+          <div id="recipe-modal-alert" style="margin-top:8px"></div>
+          <button class="btn btn-mustard" style="width:100%;margin-top:12px" onclick="saveRecipe()">Save Recipe</button>
         </div>
       </div>
 
@@ -1261,8 +1543,12 @@ function kanbanCard(order,sc,canDrag){
   return`<div class="kanban-card ${sc}"
     ${canDrag?`draggable="true" ondragstart="handleKanbanDragStart(event,'${order.id}','${sc}')"`:''}
     onclick="openOrderDetail('${order.id}')">
-    <div class="kanban-card-outlet">${order.outlets?.name||'Unknown'}</div>
-    <div class="kanban-card-items">${(order.order_items||[]).map(i=>`${i.menu_items?.name} × ${i.quantity}`).join(', ')}</div>
+    <div class="kanban-card-outlet" style="display:flex;align-items:center;justify-content:space-between;gap:4px">
+      <span>${order.outlets?.name||'Unknown'}</span>
+      ${order.due_date?`<span class="due-badge${order.due_date<new Date().toISOString().split('T')[0]&&order.status!=='delivered'?' overdue-badge':''}">Due ${formatShortDate(order.due_date)}</span>`:''}
+    </div>
+    ${getFlightBadge(order)}
+    <div class="kanban-card-items" style="margin-top:6px">${(order.order_items||[]).map(i=>`${i.menu_items?.name} × ${i.quantity}`).join(', ')}</div>
     <div class="kanban-card-bar"><div class="kanban-card-bar-fill" style="width:${pct}%;background:${barColors[sc]}"></div></div>
     <div class="kanban-card-pct">${ready}/${total} · ${pct}%</div>
   </div>`;
@@ -1740,6 +2026,7 @@ const ROLES={
     {id:'kitchen-incoming',label:'Orders',fn:loadKitchenOrders},
     {id:'kitchen-scan',label:'Scan Item',fn:()=>{}},
     {id:'kitchen-ingredients',label:'Ingredients',fn:loadKitchenIngredients},
+    {id:'kitchen-recipes',label:'Recipes',fn:loadKitchenRecipes},
     {id:'kitchen-blast',label:'Broadcast',fn:()=>loadBlastList('blast-list')}
   ]},
   driver:{label:'DRIVER',tabs:[
@@ -1806,6 +2093,7 @@ async function submitLogin(){
   if(loginRole==='hq'){
     if(getPin()!==HQ_PIN){document.getElementById('pin-error').style.display='block';return;}
     currentRole='hq';currentStaffName='Admin';currentOutletId=null;currentOutletName=null;
+    setTimeout(applyPlanGating,300);
  }else if(loginRole==='outlet'){
   const sel=document.getElementById('login-outlet-select');
   const outletId=sel.value;
@@ -1887,8 +2175,8 @@ function hqNav(pageId,btn){
   if(btn)btn.classList.add('active');
   stopAllCameras();
   const pageTitles={
-    'hq-orders':'My Orders','hq-board':'Live Board','hq-inventory':'Inventory',
-    'hq-analytics':'Analytics','hq-messenger':'Messenger','hq-manager':'Manager','hq-reports':'Reports'
+    'hq-orders':'My Orders','hq-board':'Live Board','hq-inventory':'Inventory & Analytics','hq-recipes':'Recipes',
+    'hq-analytics':'Delivery Analytics','hq-messenger':'Messenger','hq-manager':'Manager','hq-reports':'Reports'
   };
   const el=document.getElementById('hq-page-title');
   if(el)el.textContent=pageTitles[pageId]||'HQ';
@@ -1901,7 +2189,9 @@ function hqNav(pageId,btn){
     'hq-analytics':loadAnalytics,
     'hq-messenger':()=>{loadMessengerOutletList();loadBlastList('admin-blast-list-inner');},
     'hq-manager':loadManager,
-    'hq-reports':()=>{}
+    'hq-recipes':loadHQRecipes,
+    'hq-dashboard':loadDashboard,
+    'hq-reports':()=>switchReportTab('charts',document.getElementById('rep-tab-charts'))
   };
   const fn=fnMap[pageId];if(fn)fn();
 }
@@ -1982,6 +2272,8 @@ function stopAllCameras(){['kitchen','driver','receive'].forEach(t=>stopCamera(t
 // ── OUTLET: NEW ORDER ──
 async function loadNewOrderForm(){
   document.getElementById('outlet-display').value=currentOutletName||'—';
+  const tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);
+  document.getElementById('order-due-date').value=tomorrow.toISOString().split('T')[0];
   await checkOrderRestrictions();
   const{data:items}=await db.from('menu_items').select('*').eq('is_active',true);
   menuItems=items||[];quantities={};
@@ -2056,10 +2348,12 @@ async function placeOrder(){
     const cutoff=new Date();cutoff.setHours(ch,cm,0,0);
     if(now>cutoff&&s.cutoff_type==='soft')isLate=true;
   }
+  const dueDate=document.getElementById('order-due-date').value||null;
   const{data:order,error}=await db.from('orders').insert({
     outlet_id:currentOutletId,client_id:clients?.[0]?.id,status:'not_ready',
     notes:(isLate?'[LATE ORDER] ':'')+( notes||''),
-    manufacturing_date:now.toISOString().split('T')[0]
+    manufacturing_date:now.toISOString().split('T')[0],
+    due_date:dueDate
   }).select().single();
   if(error){alert('Error: '+error.message);return;}
   const{data:orderItems}=await db.from('order_items').insert(
@@ -2095,14 +2389,18 @@ async function loadOutletOrders(){
   const list=document.getElementById('outlet-order-list');
   if(!data||data.length===0){list.innerHTML='<div class="empty">No orders yet</div>';return;}
   const sMap={not_ready:'nr',ready:'rd',in_transit:'tr',delivered:'dl'};
+  const today=new Date().toISOString().split('T')[0];
   list.innerHTML=data.map(order=>{
     const sc=sMap[order.status]||'nr';
     const isLate=order.notes?.includes('[LATE ORDER]');
+    const isOverdue=order.due_date&&order.due_date<today&&order.status!=='delivered';
+    const dueBadge=order.due_date?`<span class="due-badge${isOverdue?' overdue-badge':''}">Due ${formatShortDate(order.due_date)}</span>`:'';
     return`<div class="order-card ${sc}" onclick="openOrderDetail('${order.id}')">
       <div class="order-card-head">
         <div>
-          <div class="order-title">${order.outlets?.name||'Your Outlet'} ${isLate?'<span style="background:var(--nr-bg);color:var(--nr-text);font-size:9px;padding:2px 6px;border-radius:10px;font-weight:600">LATE</span>':''}</div>
-          <div class="order-meta">${(order.order_items||[]).map(i=>`${i.menu_items?.name} × ${i.quantity}`).join(', ')}</div>
+          <div class="order-title">${order.outlets?.name||'Your Outlet'} ${isLate?'<span style="background:var(--nr-bg);color:var(--nr-text);font-size:9px;padding:2px 6px;border-radius:10px;font-weight:600">LATE</span>':''}${dueBadge}</div>
+          ${getFlightBadge(order)}
+          <div class="order-meta" style="margin-top:4px">${(order.order_items||[]).map(i=>`${i.menu_items?.name} × ${i.quantity}`).join(', ')}</div>
           <div class="order-sub">${formatDate(order.ordered_at)}</div>
         </div>
         <span class="badge badge-${sc}">${formatStatus(order.status)}</span>
@@ -2496,7 +2794,48 @@ async function downloadReport(type,format){
 }
 
 // ── MANAGER ──
-async function loadManager(){await loadAdminOutlets();await loadAdminMenu();await loadOrderSettings();await loadBlockoutDates();}
+async function loadManager(){await loadAdminOutlets();await loadAdminMenu();await loadOrderSettings();await loadBlockoutDates();renderPlanToggle();}
+
+function setPlan(plan){
+  localStorage.setItem('dojo_plan',plan);
+  renderPlanToggle();
+  applyPlanGating();
+}
+
+function getPlan(){return localStorage.getItem('dojo_plan')||'plus';}
+
+function renderPlanToggle(){
+  const plan=getPlan();
+  const basicBtn=document.getElementById('plan-basic-btn');
+  const plusBtn=document.getElementById('plan-plus-btn');
+  const status=document.getElementById('plan-status');
+  if(!basicBtn)return;
+  const activeStyle='border-color:var(--mustard);background:#fff8ee;color:var(--charcoal)';
+  const inactiveStyle='border:2px solid #e0ddd5;background:#f8f5f0;color:#888';
+  basicBtn.style.cssText=`flex:1;padding:12px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;${plan==='basic'?activeStyle:inactiveStyle}`;
+  plusBtn.style.cssText=`flex:1;padding:12px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;${plan==='plus'?activeStyle:inactiveStyle}`;
+  if(status)status.textContent=plan==='plus'?'⚡ Plus plan active — all features unlocked':'🟤 Basic plan — delivery tracking only';
+}
+
+function applyPlanGating(){
+  const isPlus=getPlan()==='plus';
+  const plusItems=['sb-inventory','sb-recipes'];
+  plusItems.forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    el.style.opacity=isPlus?'1':'0.4';
+    el.style.pointerEvents=isPlus?'auto':'none';
+    const existing=el.querySelector('.plus-lock');
+    if(!isPlus&&!existing){
+      const lock=document.createElement('span');
+      lock.className='plus-lock';
+      lock.style.cssText='font-size:9px;background:#EF9F27;color:#2C2A25;padding:1px 5px;border-radius:6px;margin-left:auto;font-weight:700';
+      lock.textContent='PLUS';
+      el.appendChild(lock);
+    }
+    if(isPlus){const lock=el.querySelector('.plus-lock');if(lock)lock.remove();}
+  });
+}
 
 async function loadAdminOutlets(){
   const{data}=await db.from('outlets').select('*').order('name');
@@ -2842,11 +3181,15 @@ function renderOrderList(containerId,data){
     const ready=allUnits.filter(u=>u.status!=='not_ready').length;
     const pct=total>0?Math.round((ready/total)*100):{not_ready:0,ready:33,in_transit:66,delivered:100}[order.status]||0;
     const isLate=order.notes?.includes('[LATE ORDER]');
+    const today=new Date().toISOString().split('T')[0];
+    const isOverdue=order.due_date&&order.due_date<today&&order.status!=='delivered';
+    const dueBadge=order.due_date?`<span class="due-badge${isOverdue?' overdue-badge':''}">Due ${formatShortDate(order.due_date)}</span>`:'';
     return`<div class="order-card ${sc}" onclick="openOrderDetail('${order.id}')">
       <div class="order-card-head">
         <div>
-          <div class="order-title">${order.outlets?.name||'Unknown'} ${isLate?'<span style="background:var(--nr-bg);color:var(--nr-text);font-size:9px;padding:2px 6px;border-radius:10px;font-weight:600">LATE</span>':''}</div>
-          <div class="order-meta">${(order.order_items||[]).map(i=>`${i.menu_items?.name} × ${i.quantity}`).join(', ')}</div>
+          <div class="order-title">${order.outlets?.name||'Unknown'} ${isLate?'<span style="background:var(--nr-bg);color:var(--nr-text);font-size:9px;padding:2px 6px;border-radius:10px;font-weight:600">LATE</span>':''}${dueBadge}</div>
+          ${getFlightBadge(order)}
+          <div class="order-meta" style="margin-top:4px">${(order.order_items||[]).map(i=>`${i.menu_items?.name} × ${i.quantity}`).join(', ')}</div>
           <div class="order-sub">${formatDate(order.ordered_at)}</div>
         </div>
         <span class="badge badge-${sc}">${formatStatus(order.status)}</span>
@@ -3247,6 +3590,710 @@ function showAlert(id,msg,type){const el=document.getElementById(id);if(el)el.in
 function formatStatus(s){return{not_ready:'Not Ready',ready:'Ready to Pick Up',in_transit:'In Transit',delivered:'Delivered'}[s]||s;}
 function formatDate(d){if(!d)return'—';return new Date(d).toLocaleString('en-MY',{dateStyle:'short',timeStyle:'short'});}
 function formatDateOnly(d){if(!d)return'—';return new Date(d).toLocaleDateString('en-MY',{dateStyle:'medium'});}
+function formatShortDate(d){if(!d)return'—';const dt=new Date(d+'T00:00:00');return dt.toLocaleDateString('en-MY',{day:'numeric',month:'short'});}
+function getFlightBadge(order){
+  if(!order.due_date)return'';
+  const today=new Date().toISOString().split('T')[0];
+  const tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);
+  const tmr=tomorrow.toISOString().split('T')[0];
+  if(order.status==='delivered')return'<span style="display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:#C0DD97;color:#27500A;margin-top:3px">✓ Arrived</span>';
+  if(order.status==='cancelled')return'<span style="display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:#e0ddd5;color:#888;margin-top:3px">✕ Cancelled</span>';
+  if(order.due_date<today)return'<span style="display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:#F7C1C1;color:#7B2D2D;margin-top:3px">⚠ Delayed</span>';
+  if(order.due_date===today)return'<span style="display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:#FAEEDA;color:#633806;margin-top:3px">⏱ Due Today</span>';
+  if(order.due_date===tmr)return'<span style="display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:#FAEEDA;color:#633806;margin-top:3px">↗ Due Tomorrow</span>';
+  return'<span style="display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:#C0DD97;color:#27500A;margin-top:3px">✈ On Time</span>';
+}
+
+// ══════════════════════════════
+// ── RECIPES ──
+// ══════════════════════════════
+let allHQRecipes=[],recipeSearchTerm='',recipeCat='all';
+let editingIngredients=[];
+
+function openRecipeModal(recipe=null){
+  editingIngredients=recipe?.ingredients||[{name:'',qty:'',unit:''}];
+  document.getElementById('editing-recipe-id').value=recipe?.id||'';
+  document.getElementById('recipe-modal-title').textContent=recipe?'Edit Recipe':'Add Recipe';
+  document.getElementById('rm-name').value=recipe?.name||'';
+  document.getElementById('rm-category').value=recipe?.category||'cake';
+  document.getElementById('rm-visibility').value=recipe?.visibility||'kitchen';
+  document.getElementById('rm-desc').value=recipe?.description||'';
+  document.getElementById('rm-yield-qty').value=recipe?.yield_qty||'';
+  document.getElementById('rm-yield-unit').value=recipe?.yield_unit||'portions';
+  document.getElementById('rm-cost').value=recipe?.cost_per_unit||'';
+  document.getElementById('rm-allergens').value=recipe?.allergens||'';
+  document.getElementById('recipe-modal-alert').innerHTML='';
+  renderIngredientRows();
+  document.getElementById('recipe-modal').classList.add('open');
+}
+function closeRecipeModal(){document.getElementById('recipe-modal').classList.remove('open');}
+
+function renderIngredientRows(){
+  const container=document.getElementById('rm-ingredients-list');
+  container.innerHTML=editingIngredients.map((ing,i)=>`
+    <div class="ing-add-row">
+      <input type="text" placeholder="Ingredient" value="${ing.name||''}" oninput="updateIng(${i},'name',this.value)"/>
+      <input type="number" placeholder="Qty" value="${ing.qty||''}" step="0.1" min="0" oninput="updateIng(${i},'qty',this.value)"/>
+      <input type="text" placeholder="Unit" value="${ing.unit||''}" oninput="updateIng(${i},'unit',this.value)"/>
+      <button class="ing-remove-btn" onclick="removeIngRow(${i})">×</button>
+    </div>`).join('');
+}
+function updateIng(i,field,val){editingIngredients[i][field]=val;}
+function addIngredientRow(){editingIngredients.push({name:'',qty:'',unit:''});renderIngredientRows();}
+function removeIngRow(i){editingIngredients.splice(i,1);renderIngredientRows();}
+
+async function saveRecipe(){
+  const name=document.getElementById('rm-name').value.trim();
+  if(!name){showAlert('recipe-modal-alert','Recipe name is required.','error');return;}
+  const validIngs=editingIngredients.filter(i=>i.name&&i.qty&&i.unit);
+  if(!validIngs.length){showAlert('recipe-modal-alert','Add at least one ingredient.','error');return;}
+  showAlert('recipe-modal-alert','Saving...','info');
+  const payload={
+    name,category:document.getElementById('rm-category').value,
+    description:document.getElementById('rm-desc').value.trim()||null,
+    yield_qty:parseFloat(document.getElementById('rm-yield-qty').value)||1,
+    yield_unit:document.getElementById('rm-yield-unit').value.trim()||'portions',
+    cost_per_unit:parseFloat(document.getElementById('rm-cost').value)||0,
+    allergens:document.getElementById('rm-allergens').value.trim()||null,
+    visibility:document.getElementById('rm-visibility').value,
+    is_active:true
+  };
+  const editId=document.getElementById('editing-recipe-id').value;
+  let recipeId=editId;
+  if(editId){
+    await db.from('recipes').update(payload).eq('id',editId);
+    await db.from('recipe_ingredients').delete().eq('recipe_id',editId);
+  }else{
+    const{data,error}=await db.from('recipes').insert(payload).select().single();
+    if(error){showAlert('recipe-modal-alert','Failed to save. Try again.','error');return;}
+    recipeId=data.id;
+  }
+  await db.from('recipe_ingredients').insert(validIngs.map(i=>({recipe_id:recipeId,ingredient_name:i.name,quantity:parseFloat(i.qty),unit:i.unit})));
+  closeRecipeModal();
+  loadHQRecipes();
+}
+
+async function deleteRecipe(id){
+  if(!confirm('Delete this recipe? This cannot be undone.'))return;
+  await db.from('recipe_ingredients').delete().eq('recipe_id',id);
+  await db.from('recipes').update({is_active:false}).eq('id',id);
+  loadHQRecipes();
+}
+
+async function updateRecipeVisibility(id,val){
+  await db.from('recipes').update({visibility:val}).eq('id',id);
+}
+
+async function loadHQRecipes(){
+  const container=document.getElementById('hq-recipe-list');
+  if(!container)return;
+  container.innerHTML='<div class="loader">Loading...</div>';
+  const{data:recipes}=await db.from('recipes').select('*').eq('is_active',true).order('name');
+  const{data:ings}=await db.from('recipe_ingredients').select('*');
+  allHQRecipes=(recipes||[]).map(r=>({...r,ingredients:(ings||[]).filter(i=>i.recipe_id===r.id)}));
+  renderHQRecipeList();
+}
+
+function filterHQRecipes(val){recipeSearchTerm=val;renderHQRecipeList();}
+function setRecipeCat(cat,btn){
+  recipeCat=cat;
+  document.querySelectorAll('#recipe-cat-row .cat-chip').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderHQRecipeList();
+}
+
+const catEmoji={cake:'🎂',pastry:'🥐',mousse:'🍫',roulade:'🌀',other:'🍽️'};
+function renderHQRecipeList(){
+  const container=document.getElementById('hq-recipe-list');
+  if(!container)return;
+  const filtered=allHQRecipes.filter(r=>{
+    const mc=recipeCat==='all'||r.category===recipeCat;
+    const ms=r.name.toLowerCase().includes(recipeSearchTerm.toLowerCase());
+    return mc&&ms;
+  });
+  if(!filtered.length){container.innerHTML='<div class="empty">No recipes found. Add one above.</div>';return;}
+  container.innerHTML=filtered.map(r=>{
+    const visLabel={kitchen:'🔓 Kitchen visible',hq_only:'🔒 HQ only',name_only:'👁 Name only'}[r.visibility]||'🔓 Kitchen visible';
+    const visClass={kitchen:'',hq_only:'rc-locked',name_only:'rc-nameonly'}[r.visibility]||'';
+    return`<div class="recipe-item" id="hr-${r.id}">
+      <div class="recipe-header" onclick="toggleRecipe('${r.id}')">
+        <div class="recipe-thumb-ph">${catEmoji[r.category]||'🍽️'}</div>
+        <div class="recipe-rinfo">
+          <div class="recipe-rname">${r.name}</div>
+          <div class="recipe-rmeta">${r.ingredients.length} ingredients · ${r.yield_qty} ${r.yield_unit}</div>
+          <div class="recipe-rchips">
+            <span class="rchip rc-${r.category}">${r.category}</span>
+            ${visClass?`<span class="rchip ${visClass}">${visLabel}</span>`:''}
+          </div>
+        </div>
+        <div class="recipe-rright">
+          <div class="recipe-rcost">RM ${(r.cost_per_unit||0).toFixed(2)}</div>
+          <div class="recipe-rcost-lbl">per ${(r.yield_unit||'unit').replace(/s$/,'')}</div>
+          <span class="rchevron">▼</span>
+        </div>
+      </div>
+      <div class="recipe-rbody">
+        <div class="recipe-rbody-inner">
+          <div class="recipe-rdivider"></div>
+          ${r.description?`<div class="recipe-rdesc">${r.description}</div>`:''}
+          <div class="ing-tbl-hdr"><span>Ingredient</span><span>Qty</span><span>Unit</span></div>
+          ${r.ingredients.map(i=>`<div class="ing-tbl-row"><span>${i.ingredient_name}</span><span class="ing-tbl-qty">${i.quantity}</span><span class="ing-tbl-unit">${i.unit}</span></div>`).join('')}
+          <div class="recipe-rfooter">
+            <div>
+              <div style="font-size:11px;color:#888">Makes <strong>${r.yield_qty} ${r.yield_unit}</strong>${r.allergens?` · ⚠ ${r.allergens}`:''}</div>
+              <select class="visibility-select" style="margin-top:6px" onchange="updateRecipeVisibility('${r.id}',this.value)">
+                <option value="kitchen" ${r.visibility==='kitchen'?'selected':''}>🔓 Kitchen visible</option>
+                <option value="hq_only" ${r.visibility==='hq_only'?'selected':''}>🔒 HQ only</option>
+                <option value="name_only" ${r.visibility==='name_only'?'selected':''}>👁 Name only</option>
+              </select>
+            </div>
+            <div class="recipe-action-btns">
+              <button class="rbtn-edit" onclick="openRecipeModal(allHQRecipes.find(x=>x.id==='${r.id}'))">Edit</button>
+              <button class="rbtn-delete" onclick="deleteRecipe('${r.id}')">🗑</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleRecipe(id){
+  const el=document.getElementById('hr-'+id);
+  const open=el.classList.contains('open');
+  document.querySelectorAll('.recipe-item').forEach(e=>e.classList.remove('open'));
+  if(!open)el.classList.add('open');
+}
+
+async function loadKitchenRecipes(){
+  const container=document.getElementById('kitchen-recipe-list');
+  if(!container)return;
+  container.innerHTML='<div class="loader">Loading recipes...</div>';
+  const{data:recipes}=await db.from('recipes').select('*').eq('is_active',true).neq('visibility','hq_only').order('name');
+  const{data:ings}=await db.from('recipe_ingredients').select('*');
+  const all=(recipes||[]).map(r=>({...r,ingredients:(ings||[]).filter(i=>i.recipe_id===r.id)}));
+  if(!all.length){container.innerHTML='<div class="empty">No recipes shared yet.</div>';return;}
+  container.innerHTML=all.map(r=>{
+    const nameOnly=r.visibility==='name_only';
+    return`<div class="recipe-item" id="kr-${r.id}">
+      <div class="recipe-header" onclick="${nameOnly?'':`toggleKRecipe('${r.id}')`}">
+        <div class="recipe-thumb-ph">${catEmoji[r.category]||'🍽️'}</div>
+        <div class="recipe-rinfo">
+          <div class="recipe-rname">${r.name}</div>
+          <div class="recipe-rmeta">${nameOnly?'Recipe details hidden by HQ':`${r.ingredients.length} ingredients · ${r.yield_qty} ${r.yield_unit}`}</div>
+          <div class="recipe-rchips"><span class="rchip rc-${r.category}">${r.category}</span>${nameOnly?'<span class="rchip rc-locked">🔒 Hidden</span>':''}</div>
+        </div>
+        <div class="recipe-rright">
+          ${nameOnly?'':`<span class="rchevron">▼</span>`}
+        </div>
+      </div>
+      ${nameOnly?'':`<div class="recipe-rbody">
+        <div class="recipe-rbody-inner">
+          <div class="recipe-rdivider"></div>
+          ${r.description?`<div class="recipe-rdesc">${r.description}</div>`:''}
+          <div class="ing-tbl-hdr"><span>Ingredient</span><span>Qty</span><span>Unit</span></div>
+          ${r.ingredients.map(i=>`<div class="ing-tbl-row"><span>${i.ingredient_name}</span><span class="ing-tbl-qty">${i.quantity}</span><span class="ing-tbl-unit">${i.unit}</span></div>`).join('')}
+          <div style="font-size:11px;color:#888;margin-top:10px">Makes <strong>${r.yield_qty} ${r.yield_unit}</strong>${r.allergens?` · ⚠ ${r.allergens}`:''}</div>
+        </div>
+      </div>`}
+    </div>`;
+  }).join('');
+}
+
+function filterKitchenRecipes(val){
+  document.querySelectorAll('#kitchen-recipe-list .recipe-item').forEach(el=>{
+    const name=el.querySelector('.recipe-rname')?.textContent||'';
+    el.style.display=name.toLowerCase().includes(val.toLowerCase())?'':'none';
+  });
+}
+
+function toggleKRecipe(id){
+  const el=document.getElementById('kr-'+id);
+  const open=el.classList.contains('open');
+  document.querySelectorAll('#kitchen-recipe-list .recipe-item').forEach(e=>e.classList.remove('open'));
+  if(!open)el.classList.add('open');
+}
+
+// ══════════════════════════════
+// ── ANALYTICS CHARTS ──
+// ══════════════════════════════
+let activeCharts=[];
+function destroyCharts(){activeCharts.forEach(c=>{try{c.destroy();}catch(e){}});activeCharts=[];}
+
+function switchReportTab(tab,btn){
+  document.querySelectorAll('.analytics-tab').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  document.getElementById('rep-charts-panel').style.display=tab==='charts'?'block':'none';
+  document.getElementById('rep-downloads-panel').style.display=tab==='downloads'?'block':'none';
+  if(tab==='charts')loadInventoryCharts();
+}
+
+async function loadInventoryCharts(){
+  const container=document.getElementById('rep-charts-content');
+  if(!container)return;
+  container.innerHTML='<div class="loader">Loading analytics...</div>';
+  destroyCharts();
+  const{data:batches}=await db.from('ingredient_batches').select('*');
+  const{data:usage}=await db.from('batch_usage').select('*');
+  const allB=batches||[];const allU=usage||[];
+  if(!allB.length){container.innerHTML='<div class="empty">No ingredient data yet. Log batches in Central Kitchen first.</div>';return;}
+  // aggregate by ingredient
+  const byIng={};
+  allB.forEach(b=>{
+    if(!byIng[b.ingredient])byIng[b.ingredient]={received:0,remaining:0};
+    byIng[b.ingredient].received+=b.weight_kg;
+    byIng[b.ingredient].remaining+=b.remaining_kg;
+  });
+  const ings=Object.keys(byIng);
+  const received=ings.map(k=>byIng[k].received);
+  const remaining=ings.map(k=>byIng[k].remaining);
+  const used=ings.map((k,i)=>Math.round((byIng[k].received-byIng[k].remaining)*10)/10);
+  const totalReceived=received.reduce((a,b)=>a+b,0);
+  const totalUsed=used.reduce((a,b)=>a+b,0);
+  const totalRemaining=remaining.reduce((a,b)=>a+b,0);
+  const totalLoss=Math.max(0,Math.round((totalReceived-totalUsed-totalRemaining)*10)/10);
+  // wastage per ingredient
+  const wastage=ings.map((k,i)=>Math.max(0,Math.round((byIng[k].received-byIng[k].remaining-used[i])*10)/10));
+  const wastagePct=ings.map((k,i)=>byIng[k].received>0?Math.round(wastage[i]/byIng[k].received*100):0);
+  // usage by product
+  const byProduct={};
+  allU.forEach(u=>{byProduct[u.used_for]=(byProduct[u.used_for]||0)+u.weight_used_kg;});
+  const products=Object.keys(byProduct);
+  const prodUsed=products.map(p=>byProduct[p]);
+  const palette=['#185FA5','#EF9F27','#27500A','#9d174d','#7B2D2D','#aaa','#2C2A25'];
+  container.innerHTML=`
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+      <div class="kpi-card" style="flex:1;min-width:120px;background:white;border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#aaa;letter-spacing:.6px;margin-bottom:4px">Total Received</div>
+        <div style="font-size:22px;font-weight:800;color:#27500A">${totalReceived.toFixed(1)}kg</div>
+      </div>
+      <div class="kpi-card" style="flex:1;min-width:120px;background:white;border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#aaa;letter-spacing:.6px;margin-bottom:4px">Used in Production</div>
+        <div style="font-size:22px;font-weight:800;color:#EF9F27">${totalUsed.toFixed(1)}kg</div>
+      </div>
+      <div class="kpi-card" style="flex:1;min-width:120px;background:white;border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#aaa;letter-spacing:.6px;margin-bottom:4px">Unexplained Loss</div>
+        <div style="font-size:22px;font-weight:800;color:#7B2D2D">${totalLoss.toFixed(1)}kg</div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">Stock Breakdown</div>
+      <div class="chart-card-sub">Where did all received stock go?</div>
+      <div class="chart-donut-wrap">
+        <div class="chart-donut-canvas"><canvas id="rc-donut"></canvas></div>
+        <div class="chart-legend">
+          <div class="chart-legend-row"><div style="display:flex;align-items:center;flex:1"><div class="chart-legend-dot" style="background:#EF9F27"></div><div class="chart-legend-name">Used</div></div><div><span class="chart-legend-val">${totalUsed.toFixed(1)}kg</span><span class="chart-legend-pct">${totalReceived>0?Math.round(totalUsed/totalReceived*100):0}%</span></div></div>
+          <div class="chart-legend-row"><div style="display:flex;align-items:center;flex:1"><div class="chart-legend-dot" style="background:#27500A"></div><div class="chart-legend-name">Remaining</div></div><div><span class="chart-legend-val">${totalRemaining.toFixed(1)}kg</span><span class="chart-legend-pct">${totalReceived>0?Math.round(totalRemaining/totalReceived*100):0}%</span></div></div>
+          <div class="chart-legend-row"><div style="display:flex;align-items:center;flex:1"><div class="chart-legend-dot" style="background:#7B2D2D"></div><div class="chart-legend-name">Loss</div></div><div><span class="chart-legend-val">${totalLoss.toFixed(1)}kg</span><span class="chart-legend-pct">${totalReceived>0?Math.round(totalLoss/totalReceived*100):0}%</span></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">Received vs Used vs Remaining</div>
+      <div class="chart-card-sub">By ingredient (kg)</div>
+      <canvas id="rc-bar" height="200"></canvas>
+    </div>
+    ${products.length?`<div class="chart-card">
+      <div class="chart-card-title">Usage by Product</div>
+      <div class="chart-card-sub">Which products consumed the most stock?</div>
+      <div class="chart-donut-wrap">
+        <div class="chart-donut-canvas"><canvas id="rc-pie"></canvas></div>
+        <div class="chart-legend">${products.map((p,i)=>`<div class="chart-legend-row"><div style="display:flex;align-items:center;flex:1"><div class="chart-legend-dot" style="background:${palette[i%palette.length]}"></div><div class="chart-legend-name" style="font-size:11px">${p}</div></div><div><span class="chart-legend-val">${byProduct[p].toFixed(1)}kg</span><span class="chart-legend-pct">${totalUsed>0?Math.round(byProduct[p]/totalUsed*100):0}%</span></div></div>`).join('')}</div>
+      </div>
+    </div>`:''}
+    <div class="chart-card">
+      <div class="chart-card-title">Wastage % by Ingredient</div>
+      <div class="chart-card-sub">Unexplained loss as % of received</div>
+      <canvas id="rc-wastage" height="160"></canvas>
+      <div style="margin-top:14px">${ings.map((k,i)=>`<div class="wastage-summary-row"><div class="ws-info"><div class="ws-name">${k}</div><div class="ws-detail">Received ${byIng[k].received}kg · Remaining ${byIng[k].remaining}kg</div></div><div class="ws-pct ${wastagePct[i]===0?'ws-good':wastagePct[i]<5?'ws-warn':'ws-bad'}">${wastagePct[i]}%</div></div>`).join('')}</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn btn-mustard" style="flex:1" onclick="downloadInventoryCSV()">⬇ Download CSV</button>
+      <button class="btn" style="flex:1" onclick="window.print()">🖨 Print PDF</button>
+    </div>`;
+  // render charts
+  activeCharts.push(new Chart(document.getElementById('rc-donut'),{type:'doughnut',data:{labels:['Used','Remaining','Loss'],datasets:[{data:[totalUsed,totalRemaining,totalLoss],backgroundColor:['#EF9F27','#27500A','#7B2D2D'],borderWidth:0,hoverOffset:6}]},options:{cutout:'70%',plugins:{legend:{display:false}},animation:{animateScale:true}}}));
+  activeCharts.push(new Chart(document.getElementById('rc-bar'),{type:'bar',data:{labels:ings,datasets:[{label:'Received',data:received,backgroundColor:'#185FA5',borderRadius:4},{label:'Used',data:used,backgroundColor:'#EF9F27',borderRadius:4},{label:'Remaining',data:remaining,backgroundColor:'#C0DD97',borderRadius:4}]},options:{plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:12,font:{size:10}}}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'#f0ece4'},ticks:{font:{size:10},callback:v=>v+'kg'}}},responsive:true}}));
+  if(products.length)activeCharts.push(new Chart(document.getElementById('rc-pie'),{type:'doughnut',data:{labels:products,datasets:[{data:prodUsed,backgroundColor:palette,borderWidth:0,hoverOffset:6}]},options:{cutout:'70%',plugins:{legend:{display:false}},animation:{animateScale:true}}}));
+  if(ings.length)activeCharts.push(new Chart(document.getElementById('rc-wastage'),{type:'bar',data:{labels:ings,datasets:[{label:'Loss %',data:wastagePct,backgroundColor:wastagePct.map(p=>p===0?'#C0DD97':p<5?'#EF9F27':'#7B2D2D'),borderRadius:6}]},options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw+'%'}}},scales:{x:{max:Math.max(15,...wastagePct)+2,ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:'#f0ece4'}},y:{grid:{display:false},ticks:{font:{size:10}}}},responsive:true}}));
+}
+
+async function downloadInventoryCSV(){
+  const{data:batches}=await db.from('ingredient_batches').select('*').order('arrived_at',{ascending:false});
+  const{data:usage}=await db.from('batch_usage').select('*').order('created_at',{ascending:false});
+  let csv='INGREDIENT BATCHES\nIngredient,Supplier,Received (kg),Remaining (kg),Quality,Arrived,Logged By\n';
+  (batches||[]).forEach(b=>{csv+=`"${b.ingredient}","${b.supplier||''}","${b.weight_kg}","${b.remaining_kg}","${b.quality_status}","${formatDate(b.arrived_at)}","${b.created_by||''}"\n`;});
+  csv+='\nUSAGE LOG\nDate,Batch ID,Used For,Weight Used (kg),Logged By\n';
+  (usage||[]).forEach(u=>{csv+=`"${formatDate(u.created_at)}","${u.batch_id}","${u.used_for}","${u.weight_used_kg}","${u.logged_by||''}"\n`;});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download=`DOJO_Inventory_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+// ══════════════════════════════
+// ── WIDGET DASHBOARD ──
+// ══════════════════════════════
+const WIDGETS=[
+  {id:'w-orders',title:'Active Orders',col:'full',accent:'mustard'},
+  {id:'w-stock',title:'Total Stock',col:'half',accent:'green'},
+  {id:'w-batches',title:'Active Batches',col:'half',accent:'blue'},
+  {id:'w-fifo',title:'FIFO Alerts',col:'half',accent:'red'},
+  {id:'w-wastage',title:'Top Wastage',col:'half',accent:''},
+  {id:'w-recipes',title:'Recipes',col:'half',accent:''},
+  {id:'w-deliveries',title:'Deliveries Today',col:'half',accent:''},
+];
+let widgetOrder=null;
+
+function getWidgetOrder(){
+  try{const s=localStorage.getItem('dojoWidgetOrder');return s?JSON.parse(s):null;}catch(e){return null;}
+}
+function saveWidgetOrder(){localStorage.setItem('dojoWidgetOrder',JSON.stringify(widgetOrder));}
+function resetDashboard(){localStorage.removeItem('dojoWidgetOrder');widgetOrder=null;loadDashboard();}
+
+async function loadDashboard(){
+  const grid=document.getElementById('widget-grid');
+  if(!grid)return;
+  grid.innerHTML='<div class="loader" style="grid-column:1/-1">Loading dashboard...</div>';
+  // fetch data
+  const[{data:orders},{data:batches},{data:recipes}]=await Promise.all([
+    db.from('orders').select('status'),
+    db.from('ingredient_batches').select('*').eq('is_active',true),
+    db.from('recipes').select('id').eq('is_active',true)
+  ]);
+  const o=orders||[];const b=batches||[];
+  const notReady=o.filter(x=>x.status==='not_ready').length;
+  const ready=o.filter(x=>x.status==='ready').length;
+  const transit=o.filter(x=>x.status==='in_transit').length;
+  const delivered=o.filter(x=>x.status==='delivered').length;
+  const totalKg=b.reduce((s,x)=>s+x.remaining_kg,0);
+  const byIng={};b.forEach(x=>{(byIng[x.ingredient]=byIng[x.ingredient]||[]).push(x);});
+  const fifoAlerts=Object.values(byIng).filter(arr=>arr.length>1).length;
+  const topWaste=b.sort((a,z)=>((a.weight_kg-a.remaining_kg)/a.weight_kg)-((z.weight_kg-z.remaining_kg)/z.weight_kg)).slice(0,3);
+  const widgetData={
+    'w-orders':{value:transit,sub:`${notReady} not ready · ${ready} ready · ${delivered} delivered`,list:[{l:'Not Ready',v:notReady},{l:'Ready',v:ready},{l:'In Transit',v:transit},{l:'Delivered',v:delivered}]},
+    'w-stock':{value:totalKg.toFixed(1)+'kg',sub:`across ${b.length} batches`},
+    'w-batches':{value:b.length,sub:'active ingredient batches'},
+    'w-fifo':{value:fifoAlerts,sub:fifoAlerts?'tap to view FIFO items':'all clear',link:()=>{switchInvTab('ingredients',document.getElementById('inv-tab-ing'));setTimeout(scrollToFifo,400);}},
+    'w-wastage':{value:topWaste[0]?topWaste[0].ingredient:'—',sub:topWaste[0]?`${Math.round((topWaste[0].weight_kg-topWaste[0].remaining_kg)/topWaste[0].weight_kg*100)}% used`:'no data',list:topWaste.map(x=>({l:x.ingredient,v:Math.round((x.weight_kg-x.remaining_kg)/x.weight_kg*100)+'%'})),link:()=>switchInvTab('ingredients',document.getElementById('inv-tab-ing'))},
+    'w-recipes':{value:(recipes||[]).length,sub:'tap to view recipes',link:()=>hqNav('hq-recipes',document.getElementById('sb-recipes'))},
+    'w-deliveries':{value:delivered,sub:'tap to view live board',link:()=>hqNav('hq-board',document.getElementById('sb-board'))},
+  };
+  widgetOrder=getWidgetOrder()||WIDGETS.map(w=>w.id);
+  let dragSrc=null;
+  grid.innerHTML='';
+  widgetOrder.forEach(wid=>{
+    const def=WIDGETS.find(w=>w.id===wid);if(!def)return;
+    const d=widgetData[wid]||{};
+    const div=document.createElement('div');
+    div.className=`widget${def.col==='full'?' widget-full':''}${def.accent?` widget-accent-${def.accent}`:''}`;
+    div.id=wid;div.draggable=true;
+    div.innerHTML=`<div class="widget-header"><div class="widget-title">${def.title}</div><button class="widget-hide-btn" onclick="hideWidget('${wid}')" title="Hide widget">—</button></div>
+      <div class="widget-value" title="${d.link?'Click to navigate':''}">${d.value??'—'}</div>
+      <div class="widget-sub">${d.sub||''}</div>
+      ${d.link?`<div class="widget-link-hint">↗ tap to view</div>`:''}
+      ${d.list?`<div class="widget-list">${d.list.map(r=>`<div class="widget-list-row"><span class="widget-list-label">${r.l}</span><span class="widget-list-val">${r.v}</span></div>`).join('')}</div>`:''}`;
+    if(d.link){
+      div.querySelector('.widget-value').addEventListener('click',e=>{e.stopPropagation();d.link();});
+    }
+    div.addEventListener('dragstart',e=>{dragSrc=wid;div.classList.add('dragging');e.dataTransfer.effectAllowed='move';});
+    div.addEventListener('dragend',()=>div.classList.remove('dragging'));
+    div.addEventListener('dragover',e=>{e.preventDefault();div.classList.add('drag-over');});
+    div.addEventListener('dragleave',()=>div.classList.remove('drag-over'));
+    div.addEventListener('drop',e=>{e.preventDefault();div.classList.remove('drag-over');if(dragSrc&&dragSrc!==wid){const from=widgetOrder.indexOf(dragSrc);const to=widgetOrder.indexOf(wid);widgetOrder.splice(to,0,widgetOrder.splice(from,1)[0]);saveWidgetOrder();loadDashboard();}});
+    grid.appendChild(div);
+  });
+}
+
+function hideWidget(id){
+  widgetOrder=widgetOrder.filter(w=>w!==id);
+  saveWidgetOrder();
+  loadDashboard();
+}
+
+// ══════════════════════════════
+// ── DEMO DATA SEEDER ──
+// ══════════════════════════════
+async function seedDemoData(){
+  if(!confirm('This will load a full A-Z demo into your database:\n\n• 6 menu items (Burnt Cheesecake, Kaya Cake, etc.)\n• 12 ingredient batches (realistic bakery volumes)\n• Batch usage logs showing processing\n• 6 recipes with ingredients\n• 5 demo orders across all statuses\n• Driver scans + outlet delivery confirmations\n\nExisting menu items will not be affected.\n\nContinue?'))return;
+  showAlert('seed-alert','Loading full demo — please wait...','info');
+  const now=new Date();
+  const daysAgo=(d)=>new Date(now-d*86400000).toISOString();
+  const daysAgoDate=(d)=>new Date(now-d*86400000).toISOString().split('T')[0];
+
+  try{
+    // 1. Get client_id (required for orders + menu items)
+    const{data:clients}=await db.from('clients').select('id').limit(1);
+    const clientId=clients?.[0]?.id;
+    if(!clientId){showAlert('seed-alert','⚠ No client account found. Cannot seed orders.','error');return;}
+
+    // 2. Get outlets
+    const{data:outlets}=await db.from('outlets').select('id,name').eq('is_active',true).limit(3);
+    if(!outlets||!outlets.length){showAlert('seed-alert','⚠ No outlets found. Add at least one outlet in Manager first.','error');return;}
+    const outlet1=outlets[0];
+    const outlet2=outlets[1]||outlets[0];
+    const outlet3=outlets[2]||outlets[0];
+
+    // 3. Create the 6 demo menu items
+    const demoProducts=[
+      {name:'Burnt Cheesecake',description:'Basque-style burnt cheesecake — caramelised top, creamy centre.',unit_type:'whole cake',servings_per_unit:8,shelf_life_days:3,cost_per_unit:78.00,selling_price:138.00,client_id:clientId,is_active:true},
+      {name:'Kaya Cake',description:'Pandan-infused layered sponge with homemade kaya and coconut cream filling.',unit_type:'whole cake',servings_per_unit:6,shelf_life_days:3,cost_per_unit:68.00,selling_price:118.00,client_id:clientId,is_active:true},
+      {name:'Chocolate Brownie',description:'Fudgy 70% dark chocolate brownie with crisp top. Box of 12 pieces.',unit_type:'box',servings_per_unit:12,shelf_life_days:5,cost_per_unit:42.00,selling_price:78.00,client_id:clientId,is_active:true},
+      {name:'Strawberry Roulade',description:'Light vanilla sponge rolled with imported strawberry compote and fresh cream.',unit_type:'roll',servings_per_unit:10,shelf_life_days:2,cost_per_unit:35.00,selling_price:65.00,client_id:clientId,is_active:true},
+      {name:'Mango Roulade',description:'Soft pandan sponge rolled with fresh Harum Manis mango and vanilla cream.',unit_type:'roll',servings_per_unit:10,shelf_life_days:2,cost_per_unit:38.00,selling_price:68.00,client_id:clientId,is_active:true},
+      {name:'Tropical Delight Cake',description:'Signature layered cake with mango, strawberry and coconut cream.',unit_type:'whole cake',servings_per_unit:10,shelf_life_days:3,cost_per_unit:92.00,selling_price:168.00,client_id:clientId,is_active:true},
+    ];
+    const{data:seededItems}=await db.from('menu_items').insert(demoProducts).select();
+    const getItem=(name)=>seededItems?.find(i=>i.name===name)||seededItems?.[0];
+
+    // 2. Seed ingredient batches — realistic bakery quantities (multi-outlet CK)
+    const{data:batches}=await db.from('ingredient_batches').insert([
+      // Dry goods
+      {ingredient:'Cake Flour',supplier:'Golden Grain Sdn Bhd',weight_kg:200,remaining_kg:52,quality_status:'passed',arrived_at:daysAgo(6),created_by:'Demo Kitchen',is_active:true},
+      {ingredient:'Caster Sugar',supplier:'Golden Grain Sdn Bhd',weight_kg:150,remaining_kg:38,quality_status:'passed',arrived_at:daysAgo(6),created_by:'Demo Kitchen',is_active:true},
+      {ingredient:'Butter (Unsalted)',supplier:'Dairy Plus',weight_kg:80,remaining_kg:18,quality_status:'passed',arrived_at:daysAgo(5),created_by:'Demo Kitchen',is_active:true},
+      // Fresh fruit — two active mango batches (FIFO scenario)
+      {ingredient:'Mango (Harum Manis)',supplier:'Fresh Co Sdn Bhd',weight_kg:80,remaining_kg:9,quality_status:'passed',arrived_at:daysAgo(5),created_by:'Demo Kitchen',is_active:true},
+      {ingredient:'Mango (Harum Manis)',supplier:'Fresh Co Sdn Bhd',weight_kg:60,remaining_kg:60,quality_status:'passed',arrived_at:daysAgo(1),created_by:'Demo Kitchen',is_active:true},
+      {ingredient:'Strawberry (Imported)',supplier:'Fresh Co Sdn Bhd',weight_kg:50,remaining_kg:10,quality_status:'passed',arrived_at:daysAgo(4),created_by:'Demo Kitchen',is_active:true},
+      // Dairy
+      {ingredient:'Heavy Cream (35%)',supplier:'Dairy Plus',weight_kg:60,remaining_kg:11,quality_status:'passed',arrived_at:daysAgo(4),created_by:'Demo Kitchen',is_active:true},
+      {ingredient:'Cream Cheese',supplier:'Dairy Plus',weight_kg:40,remaining_kg:8,quality_status:'passed',arrived_at:daysAgo(3),created_by:'Demo Kitchen',is_active:true},
+      // Malaysian-specific
+      {ingredient:'Kaya (Homemade)',supplier:'In-House',weight_kg:30,remaining_kg:12,quality_status:'passed',arrived_at:daysAgo(2),created_by:'Demo Kitchen',is_active:true},
+      {ingredient:'Coconut Milk',supplier:'Fresh Co Sdn Bhd',weight_kg:50,remaining_kg:18,quality_status:'passed',arrived_at:daysAgo(3),created_by:'Demo Kitchen',is_active:true},
+      {ingredient:'Pandan Extract',supplier:'Fresh Co Sdn Bhd',weight_kg:5,remaining_kg:2,quality_status:'passed',arrived_at:daysAgo(3),created_by:'Demo Kitchen',is_active:true},
+      // Specialty
+      {ingredient:'Dark Chocolate (70%)',supplier:'Choco Hub',weight_kg:40,remaining_kg:7,quality_status:'flagged',quality_notes:'Slight bloom on surface — flavour unaffected, approved for use',arrived_at:daysAgo(6),created_by:'Demo Kitchen',is_active:true},
+    ]).select();
+
+    // 3. Seed batch usage — realistic production volumes
+    if(batches){
+      const flour=batches.find(b=>b.ingredient==='Cake Flour');
+      const sugar=batches.find(b=>b.ingredient==='Caster Sugar');
+      const butter=batches.find(b=>b.ingredient==='Butter (Unsalted)');
+      const mango1=batches.find(b=>b.ingredient==='Mango (Harum Manis)'&&b.weight_kg===80);
+      const straw=batches.find(b=>b.ingredient==='Strawberry (Imported)');
+      const cream=batches.find(b=>b.ingredient==='Heavy Cream (35%)');
+      const choc=batches.find(b=>b.ingredient==='Dark Chocolate (70%)');
+      const kaya=batches.find(b=>b.ingredient==='Kaya (Homemade)');
+      const coconut=batches.find(b=>b.ingredient==='Coconut Milk');
+      const usageRows=[];
+      if(flour){
+        usageRows.push({batch_id:flour.id,used_for:'Kaya Cake (Batch Run)',weight_used_kg:55,logged_by:'Demo Kitchen',created_at:daysAgo(5)});
+        usageRows.push({batch_id:flour.id,used_for:'Strawberry Roulade (Batch Run)',weight_used_kg:36,logged_by:'Demo Kitchen',created_at:daysAgo(4)});
+        usageRows.push({batch_id:flour.id,used_for:'Mango Roulade (Batch Run)',weight_used_kg:36,logged_by:'Demo Kitchen',created_at:daysAgo(3)});
+        usageRows.push({batch_id:flour.id,used_for:'Chocolate Brownie (Batch Run)',weight_used_kg:21,logged_by:'Demo Kitchen',created_at:daysAgo(2)});
+      }
+      if(sugar){
+        usageRows.push({batch_id:sugar.id,used_for:'Kaya Cake (Batch Run)',weight_used_kg:42,logged_by:'Demo Kitchen',created_at:daysAgo(5)});
+        usageRows.push({batch_id:sugar.id,used_for:'Burnt Cheesecake (Batch Run)',weight_used_kg:24,logged_by:'Demo Kitchen',created_at:daysAgo(4)});
+        usageRows.push({batch_id:sugar.id,used_for:'Chocolate Brownie (Batch Run)',weight_used_kg:32,logged_by:'Demo Kitchen',created_at:daysAgo(3)});
+        usageRows.push({batch_id:sugar.id,used_for:'Tropical Delight Cake (Batch Run)',weight_used_kg:14,logged_by:'Demo Kitchen',created_at:daysAgo(2)});
+      }
+      if(butter){
+        usageRows.push({batch_id:butter.id,used_for:'Kaya Cake (Batch Run)',weight_used_kg:28,logged_by:'Demo Kitchen',created_at:daysAgo(5)});
+        usageRows.push({batch_id:butter.id,used_for:'Chocolate Brownie (Batch Run)',weight_used_kg:22,logged_by:'Demo Kitchen',created_at:daysAgo(3)});
+        usageRows.push({batch_id:butter.id,used_for:'Burnt Cheesecake Crust (Batch Run)',weight_used_kg:12,logged_by:'Demo Kitchen',created_at:daysAgo(2)});
+      }
+      if(mango1){
+        usageRows.push({batch_id:mango1.id,used_for:'Mango Roulade',weight_used_kg:36,logged_by:'Demo Kitchen',created_at:daysAgo(3)});
+        usageRows.push({batch_id:mango1.id,used_for:'Tropical Delight Cake',weight_used_kg:24,logged_by:'Demo Kitchen',created_at:daysAgo(2)});
+        usageRows.push({batch_id:mango1.id,used_for:'Mango Compote (Dispatch)',weight_used_kg:11,logged_by:'Demo Kitchen',created_at:daysAgo(1)});
+      }
+      if(straw){
+        usageRows.push({batch_id:straw.id,used_for:'Strawberry Roulade',weight_used_kg:28,logged_by:'Demo Kitchen',created_at:daysAgo(4)});
+        usageRows.push({batch_id:straw.id,used_for:'Tropical Delight Cake',weight_used_kg:12,logged_by:'Demo Kitchen',created_at:daysAgo(2)});
+      }
+      if(cream){
+        usageRows.push({batch_id:cream.id,used_for:'Burnt Cheesecake (Batch Run)',weight_used_kg:24,logged_by:'Demo Kitchen',created_at:daysAgo(4)});
+        usageRows.push({batch_id:cream.id,used_for:'Strawberry Roulade Filling',weight_used_kg:14,logged_by:'Demo Kitchen',created_at:daysAgo(3)});
+        usageRows.push({batch_id:cream.id,used_for:'Mango Roulade Filling',weight_used_kg:11,logged_by:'Demo Kitchen',created_at:daysAgo(2)});
+      }
+      if(choc){
+        usageRows.push({batch_id:choc.id,used_for:'Chocolate Brownie',weight_used_kg:22,logged_by:'Demo Kitchen',created_at:daysAgo(3)});
+        usageRows.push({batch_id:choc.id,used_for:'Chocolate Ganache Topping',weight_used_kg:11,logged_by:'Demo Kitchen',created_at:daysAgo(2)});
+      }
+      if(kaya){
+        usageRows.push({batch_id:kaya.id,used_for:'Kaya Cake Filling (Batch Run)',weight_used_kg:18,logged_by:'Demo Kitchen',created_at:daysAgo(4)});
+      }
+      if(coconut){
+        usageRows.push({batch_id:coconut.id,used_for:'Kaya Cake (Batch Run)',weight_used_kg:22,logged_by:'Demo Kitchen',created_at:daysAgo(5)});
+        usageRows.push({batch_id:coconut.id,used_for:'Tropical Delight Cake (Batch Run)',weight_used_kg:10,logged_by:'Demo Kitchen',created_at:daysAgo(2)});
+      }
+      if(usageRows.length)await db.from('batch_usage').insert(usageRows);
+    }
+
+    // 4. Seed recipes
+    const{data:recipes}=await db.from('recipes').insert([
+      {name:'Burnt Cheesecake',category:'cake',description:'Basque-style burnt cheesecake — caramelised top, creamy centre. Batch run yields 8 whole cakes.',yield_qty:8,yield_unit:'whole cakes',cost_per_unit:78.00,allergens:'Eggs, Dairy',visibility:'kitchen',is_active:true},
+      {name:'Kaya Cake',category:'cake',description:'Pandan-infused layered sponge with homemade kaya and coconut cream filling. A Malaysian classic. Batch run yields 6 whole cakes.',yield_qty:6,yield_unit:'whole cakes',cost_per_unit:68.00,allergens:'Gluten, Eggs, Dairy',visibility:'kitchen',is_active:true},
+      {name:'Chocolate Brownie',category:'pastry',description:'Fudgy 70% dark chocolate brownie with crisp top. Batch run yields 120 pieces.',yield_qty:120,yield_unit:'pieces',cost_per_unit:4.50,allergens:'Gluten, Eggs, Dairy',visibility:'kitchen',is_active:true},
+      {name:'Strawberry Roulade',category:'roulade',description:'Light vanilla sponge rolled with imported strawberry compote and fresh cream. Batch run yields 10 rolls.',yield_qty:10,yield_unit:'rolls',cost_per_unit:35.00,allergens:'Gluten, Eggs, Dairy',visibility:'kitchen',is_active:true},
+      {name:'Mango Roulade',category:'roulade',description:'Soft pandan sponge rolled with fresh Harum Manis mango and vanilla cream. Batch run yields 10 rolls.',yield_qty:10,yield_unit:'rolls',cost_per_unit:38.00,allergens:'Gluten, Eggs, Dairy',visibility:'kitchen',is_active:true},
+      {name:'Tropical Delight Cake',category:'cake',description:'Signature layered cake with mango, strawberry and coconut cream — house recipe. Batch run yields 5 whole cakes.',yield_qty:5,yield_unit:'whole cakes',cost_per_unit:92.00,allergens:'Gluten, Eggs, Dairy',visibility:'hq_only',is_active:true},
+    ]).select();
+
+    // 5. Seed recipe ingredients
+    if(recipes){
+      const burnt=recipes.find(r=>r.name==='Burnt Cheesecake');
+      const kaya=recipes.find(r=>r.name==='Kaya Cake');
+      const brownie=recipes.find(r=>r.name==='Chocolate Brownie');
+      const srou=recipes.find(r=>r.name==='Strawberry Roulade');
+      const mrou=recipes.find(r=>r.name==='Mango Roulade');
+      const tropical=recipes.find(r=>r.name==='Tropical Delight Cake');
+      const ingRows=[];
+      // Burnt Cheesecake — batch of 8 whole cakes
+      if(burnt)ingRows.push(...[
+        {recipe_id:burnt.id,ingredient_name:'Cream Cheese',quantity:8.0,unit:'kg'},
+        {recipe_id:burnt.id,ingredient_name:'Heavy Cream (35%)',quantity:4.0,unit:'L'},
+        {recipe_id:burnt.id,ingredient_name:'Eggs',quantity:40,unit:'pcs'},
+        {recipe_id:burnt.id,ingredient_name:'Caster Sugar',quantity:2.4,unit:'kg'},
+        {recipe_id:burnt.id,ingredient_name:'Cake Flour',quantity:0.4,unit:'kg'},
+      ]);
+      // Kaya Cake — batch of 6 whole cakes
+      if(kaya)ingRows.push(...[
+        {recipe_id:kaya.id,ingredient_name:'Kaya (Homemade)',quantity:3.6,unit:'kg'},
+        {recipe_id:kaya.id,ingredient_name:'Coconut Milk',quantity:3.0,unit:'L'},
+        {recipe_id:kaya.id,ingredient_name:'Cake Flour',quantity:4.8,unit:'kg'},
+        {recipe_id:kaya.id,ingredient_name:'Eggs',quantity:48,unit:'pcs'},
+        {recipe_id:kaya.id,ingredient_name:'Caster Sugar',quantity:3.6,unit:'kg'},
+        {recipe_id:kaya.id,ingredient_name:'Butter (Unsalted)',quantity:2.4,unit:'kg'},
+        {recipe_id:kaya.id,ingredient_name:'Pandan Extract',quantity:120,unit:'ml'},
+      ]);
+      // Chocolate Brownie — batch of 120 pieces
+      if(brownie)ingRows.push(...[
+        {recipe_id:brownie.id,ingredient_name:'Dark Chocolate (70%)',quantity:6.0,unit:'kg'},
+        {recipe_id:brownie.id,ingredient_name:'Butter (Unsalted)',quantity:4.8,unit:'kg'},
+        {recipe_id:brownie.id,ingredient_name:'Caster Sugar',quantity:7.2,unit:'kg'},
+        {recipe_id:brownie.id,ingredient_name:'Eggs',quantity:60,unit:'pcs'},
+        {recipe_id:brownie.id,ingredient_name:'Cake Flour',quantity:3.0,unit:'kg'},
+      ]);
+      // Strawberry Roulade — batch of 10 rolls
+      if(srou)ingRows.push(...[
+        {recipe_id:srou.id,ingredient_name:'Strawberry (Imported)',quantity:5.0,unit:'kg'},
+        {recipe_id:srou.id,ingredient_name:'Cake Flour',quantity:3.0,unit:'kg'},
+        {recipe_id:srou.id,ingredient_name:'Eggs',quantity:50,unit:'pcs'},
+        {recipe_id:srou.id,ingredient_name:'Caster Sugar',quantity:2.5,unit:'kg'},
+        {recipe_id:srou.id,ingredient_name:'Heavy Cream (35%)',quantity:3.0,unit:'L'},
+      ]);
+      // Mango Roulade — batch of 10 rolls
+      if(mrou)ingRows.push(...[
+        {recipe_id:mrou.id,ingredient_name:'Mango (Harum Manis)',quantity:5.0,unit:'kg'},
+        {recipe_id:mrou.id,ingredient_name:'Cake Flour',quantity:3.0,unit:'kg'},
+        {recipe_id:mrou.id,ingredient_name:'Eggs',quantity:50,unit:'pcs'},
+        {recipe_id:mrou.id,ingredient_name:'Caster Sugar',quantity:2.5,unit:'kg'},
+        {recipe_id:mrou.id,ingredient_name:'Heavy Cream (35%)',quantity:3.0,unit:'L'},
+        {recipe_id:mrou.id,ingredient_name:'Pandan Extract',quantity:50,unit:'ml'},
+      ]);
+      // Tropical Delight Cake — batch of 5 whole cakes (HQ only — signature recipe)
+      if(tropical)ingRows.push(...[
+        {recipe_id:tropical.id,ingredient_name:'Mango (Harum Manis)',quantity:4.0,unit:'kg'},
+        {recipe_id:tropical.id,ingredient_name:'Strawberry (Imported)',quantity:2.5,unit:'kg'},
+        {recipe_id:tropical.id,ingredient_name:'Coconut Milk',quantity:2.0,unit:'L'},
+        {recipe_id:tropical.id,ingredient_name:'Cake Flour',quantity:3.5,unit:'kg'},
+        {recipe_id:tropical.id,ingredient_name:'Eggs',quantity:40,unit:'pcs'},
+        {recipe_id:tropical.id,ingredient_name:'Caster Sugar',quantity:3.0,unit:'kg'},
+        {recipe_id:tropical.id,ingredient_name:'Butter (Unsalted)',quantity:2.0,unit:'kg'},
+        {recipe_id:tropical.id,ingredient_name:'Heavy Cream (35%)',quantity:2.5,unit:'L'},
+      ]);
+      if(ingRows.length)await db.from('recipe_ingredients').insert(ingRows);
+    }
+
+    // 6. Seed orders — full A-Z journey across all statuses
+    const orderDefs=[
+      // DELIVERED — Bangsar ordered Burnt Cheesecake 3 days ago, received
+      {outlet:outlet1,itemName:'Burnt Cheesecake',qty:3,status:'delivered',daysAgo:3,notes:'Demo — Bangsar weekly order'},
+      // DELIVERED — TTDI ordered Kaya Cake 2 days ago, received
+      {outlet:outlet2,itemName:'Kaya Cake',qty:5,status:'delivered',daysAgo:2,notes:'Demo — TTDI weekly order'},
+      // IN TRANSIT — Strawberry Roulade picked up, on the way to outlet
+      {outlet:outlet2,itemName:'Strawberry Roulade',qty:4,status:'in_transit',daysAgo:0,notes:'Demo — out for delivery now'},
+      // READY — Mango Roulade packed, waiting for driver pickup
+      {outlet:outlet1,itemName:'Mango Roulade',qty:4,status:'ready',daysAgo:0,notes:'Demo — ready for pickup'},
+      // NOT READY — Chocolate Brownie order just placed, CK still producing
+      {outlet:outlet3,itemName:'Chocolate Brownie',qty:6,status:'not_ready',daysAgo:0,notes:'Demo — in production'},
+    ];
+    for(const def of orderDefs){
+      const mfgDate=daysAgoDate(def.daysAgo);
+      const readyAt=['delivered','in_transit','ready'].includes(def.status)?new Date(now-(def.daysAgo*86400000)+7200000).toISOString():null;
+      const pickedAt=['delivered','in_transit'].includes(def.status)?new Date(now-(def.daysAgo*86400000)+10800000).toISOString():null;
+      const deliveredAt=def.status==='delivered'?new Date(now-(def.daysAgo*86400000)+18000000).toISOString():null;
+      const item=getItem(def.itemName);
+      // Insert order
+      const{data:order}=await db.from('orders').insert({
+        outlet_id:def.outlet.id,
+        client_id:clientId,
+        status:def.status,
+        notes:def.notes,
+        manufacturing_date:mfgDate,
+        due_date:daysAgoDate(def.daysAgo-1),
+        ready_at:readyAt,
+        picked_up_at:pickedAt,
+        delivered_at:deliveredAt,
+        best_before_date:daysAgoDate(def.daysAgo-2),
+      }).select().single();
+      if(order&&item){
+        // Insert order_items and get IDs
+        const{data:oi}=await db.from('order_items').insert({order_id:order.id,menu_item_id:item.id,quantity:def.qty}).select().single();
+        if(oi){
+          // Insert cake_units with correct columns only
+          const dateStr=mfgDate.replace(/-/g,'');
+          const prefix=item.name.replace(/\s+/g,'').substring(0,3).toUpperCase();
+          const units=Array.from({length:def.qty},(_, n)=>({
+            order_id:order.id,
+            order_item_id:oi.id,
+            menu_item_id:item.id,
+            serial_number:`${prefix}-${dateStr}-${order.id.substring(0,6).toUpperCase()}-${String(n+1).padStart(2,'0')}`,
+          }));
+          const{data:insertedUnits}=await db.from('cake_units').insert(units).select();
+          // Update status/scan fields via UPDATE (the correct way)
+          if(insertedUnits&&readyAt){
+            const unitIds=insertedUnits.map(u=>u.id);
+            await db.from('cake_units').update({
+              status:def.status,
+              scanned_ready_at:readyAt,
+              scanned_by_kitchen:'Demo Kitchen',
+              ...(pickedAt?{scanned_by_driver:true,driver_scan_at:pickedAt,rider_name:'Ahmad (Demo Driver)'}:{}),
+            }).in('id',unitIds);
+          }
+        }
+        // Insert scans (no created_at — Supabase sets this automatically)
+        if(pickedAt)await db.from('scans').insert({batch_id:order.id,scan_type:'dispatch',scanned_by:'Ahmad (Demo Driver)'});
+        if(deliveredAt)await db.from('scans').insert({batch_id:order.id,scan_type:'received',scanned_by:def.outlet.name+' (Demo)'});
+      }
+    }
+
+    showAlert('seed-alert','✅ Full demo loaded! Check Live Board, Orders, Inventory, Recipes and Reports.','success');
+    setTimeout(()=>{loadHQOrders();loadHQInventory();if(typeof loadHQRecipes==='function')loadHQRecipes();},800);
+  }catch(err){
+    showAlert('seed-alert','❌ Error seeding data: '+err.message,'error');
+  }
+}
+
+async function clearDemoData(){
+  if(!confirm('This will delete all demo ingredient batches, usage logs, and recipes marked as demo data. Orders cannot be auto-cleared. Continue?'))return;
+  showAlert('seed-alert','Clearing demo data...','info');
+  try{
+    const{data:demoBatches}=await db.from('ingredient_batches').select('id').eq('created_by','Demo Kitchen');
+    if(demoBatches?.length){
+      const ids=demoBatches.map(b=>b.id);
+      await db.from('batch_usage').delete().in('batch_id',ids);
+      await db.from('ingredient_batches').delete().in('id',ids);
+    }
+    const{data:demoRecipes}=await db.from('recipes').select('id').eq('is_active',true);
+    if(demoRecipes?.length){
+      const ids=demoRecipes.map(r=>r.id);
+      await db.from('recipe_ingredients').delete().in('recipe_id',ids);
+      await db.from('recipes').delete().in('id',ids);
+    }
+    // Remove demo menu items
+    const demoItemNames=['Burnt Cheesecake','Kaya Cake','Chocolate Brownie','Strawberry Roulade','Mango Roulade','Tropical Delight Cake'];
+    await db.from('menu_items').delete().in('name',demoItemNames);
+    showAlert('seed-alert','✅ Demo data cleared.','success');
+  }catch(err){
+    showAlert('seed-alert','❌ Error: '+err.message,'error');
+  }
+}
 
 // ── INGREDIENT BATCHES ──
 let currentIngQuality='passed';
@@ -3302,7 +4349,7 @@ async function loadKitchenIngredients(){
     const isLow=pct<=25;
     const hasFifo=(byIng[b.ingredient]||[]).length>1;
     const isOldest=hasFifo&&byIng[b.ingredient][0].id===b.id;
-    return`<div class="batch-card">
+    return`<div class="batch-card${isOldest?' fifo-flag':''}">
       <div class="batch-card-header">
         <div>
           <div class="batch-name">${b.ingredient}${isOldest?'<span class="fifo-badge">USE FIRST</span>':''}</div>
@@ -3351,9 +4398,16 @@ function switchInvTab(tab,btn){
   document.querySelectorAll('.ing-tab').forEach(b=>b.classList.remove('active'));
   if(btn)btn.classList.add('active');
   document.getElementById('inv-ingredients-panel').style.display=tab==='ingredients'?'block':'none';
+  document.getElementById('inv-analytics-panel').style.display=tab==='analytics'?'block':'none';
   document.getElementById('inv-revenue-panel').style.display=tab==='revenue'?'block':'none';
   if(tab==='ingredients')loadHQIngredients();
+  else if(tab==='analytics')loadDashboard();
   else loadInventory();
+}
+function scrollToFifo(){
+  const fifoItems=document.querySelectorAll('.fifo-flag');
+  if(fifoItems.length){fifoItems[0].scrollIntoView({behavior:'smooth',block:'center'});}
+  else{document.getElementById('hq-batches-list').scrollIntoView({behavior:'smooth'});}
 }
 
 async function loadHQInventory(){
@@ -3379,7 +4433,7 @@ async function loadHQIngredients(){
     const isLow=pct<=25;
     const hasFifo=(byIng[b.ingredient]||[]).length>1;
     const isOldest=hasFifo&&byIng[b.ingredient][0].id===b.id;
-    return`<div class="batch-card">
+    return`<div class="batch-card${isOldest?' fifo-flag':''}">
       <div class="batch-card-header">
         <div>
           <div class="batch-name">${b.ingredient}${isOldest?'<span class="fifo-badge">USE FIRST</span>':''}</div>
