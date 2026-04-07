@@ -102,7 +102,17 @@
     .app-layout{display:flex;min-height:100vh}
 
     /* ── SIDEBAR (HQ desktop only) ── */
-    .sidebar{width:220px;background:var(--charcoal);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;transition:transform 0.3s}
+    .sidebar{width:220px;background:var(--charcoal);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:200;transition:transform 0.3s}
+    .sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:199}
+    .sidebar-backdrop.open{display:block}
+    .hamburger{display:none;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.08);border:none;cursor:pointer;flex-shrink:0}
+    .hamburger svg{display:block}
+    @media(max-width:768px){
+      .sidebar{transform:translateX(-240px)}
+      .sidebar.open{transform:translateX(0)}
+      .main-with-sidebar{margin-left:0!important}
+      .hamburger{display:flex}
+    }
     .sidebar-logo{padding:18px 16px;border-bottom:1px solid rgba(255,255,255,0.06);cursor:pointer;display:flex;align-items:center;gap:10px}
     .sidebar-logo-box{width:32px;height:32px;background:var(--mustard);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:var(--charcoal);border-radius:4px;flex-shrink:0}
     .sidebar-logo-text{font-size:13px;font-weight:700;color:#F5F0E8}
@@ -781,15 +791,21 @@
 
       <!-- HQ TOP BAR -->
       <div class="hq-topbar" id="hq-topbar" style="display:none">
-        <div>
-          <div class="hq-topbar-title" id="hq-page-title">My Orders</div>
-          <div class="hq-topbar-sub" id="hq-page-sub"></div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <button class="hamburger" onclick="openSidebar()" aria-label="Menu">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#F5F0E8"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+          </button>
+          <div>
+            <div class="hq-topbar-title" id="hq-page-title">My Orders</div>
+            <div class="hq-topbar-sub" id="hq-page-sub"></div>
+          </div>
         </div>
         <div style="display:flex;align-items:center;gap:12px">
           <div class="hq-live-badge"><div class="hq-live-dot"></div>Live</div>
           <div class="session-name" id="hq-session-info"></div>
         </div>
       </div>
+      <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeSidebar()"></div>
 
       <nav class="nav" id="main-nav" style="display:none"></nav>
 
@@ -2169,8 +2185,18 @@ function switchRole(){
 }
 
 // ── HQ NAV ──
+function openSidebar(){
+  document.querySelector('.sidebar')?.classList.add('open');
+  document.getElementById('sidebar-backdrop')?.classList.add('open');
+}
+function closeSidebar(){
+  document.querySelector('.sidebar')?.classList.remove('open');
+  document.getElementById('sidebar-backdrop')?.classList.remove('open');
+}
+
 function hqNav(pageId,btn){
   showPage(pageId);
+  closeSidebar();
   document.querySelectorAll('.sidebar-item').forEach(b=>b.classList.remove('active'));
   if(btn)btn.classList.add('active');
   stopAllCameras();
